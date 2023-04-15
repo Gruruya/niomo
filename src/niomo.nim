@@ -100,7 +100,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   var config = getConfig()
   let keypair = getKeypair(account)
 
-  let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Add enabled relays
+  let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
   if echo:
     echo post
     return
@@ -121,14 +121,14 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
 proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
   # TODO: Reversing output
-  var messages = newSeqOfCap[CMRequest](ids.len)
-  var ids = ids                #
-  if ids.len == 0: ids = @[""] # Workaround cligen default opts
-  for id in ids:
+  var ids = ids                # Workaround cligen default opts
+  if ids.len == 0: ids = @[""] #
+
+  template format(postid: string): untyped =
     var filter = Filter(limit: limit, kinds: kinds)
     try:
       # TODO: Get relays as well
-      let bech32 = fromNostrBech32(id)
+      let bech32 = fromNostrBech32(postid) # Check if it's a formatted bech32 string
       unpack bech32, entity:
         when entity is NNote:
           filter.ids = @[entity.id.toHex]
@@ -141,14 +141,14 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
           filter.tags = @[@["#d", entity.id]]
         elif entity is SkXOnlyPublicKey:
           filter.authors = @[entity.toHex]
-    except InvalidBech32Error, UnknownTLVError: filter.ids = @[id]
-    if filter.kinds == @[1, 6, 30023, -1]:
+    except InvalidBech32Error, UnknownTLVError: filter.ids = @[postid]
+    if -1 in filter.kinds:
       filter.kinds = @[]
-    messages.add CMRequest(id: randomID(), filter: filter)
+    CMRequest(id: randomID(), filter: filter)
 
   if echo:
-    for request in messages:
-      echo request.toJson()
+    for id in ids:
+      echo format(id)
     return
 
   var config = getConfig()
@@ -156,12 +156,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   if relays.len == 0:
     usage "No relays configured, add relays with `niomo relay enable`"
   randomize()
-  for request in messages:
+  for id in ids:
     while relays.len > 0:
       let relay = relays.nthKey(rand(relays.len - 1))
       relays.del(relay)
       let ws = newWebSocket(relay)
-      ws.send(request.toJson)
+      ws.send(format(id).toJson)
       while true:
         let optMsg = ws.receiveMessage(10000)
         if optMsg.isNone or optMsg.unsafeGet.data == "": break
@@ -179,13 +179,13 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                     echo msg.event.content.fromJson(events.Event).content
                   else:
                     echo msg.event.content
-                  # else fetch from #e tag
+                  # TODO: else fetch from #e tag
                 else:
                   echo msg.event.content
             when msg is SMEose: break
             else: echo ""
         except: discard
-      # ws.send(Close(id: id)
+      # ws.send(CMClose(id: reqid).toJson)
       ws.close()
 
 template randomAccount: (string, Keypair) =
