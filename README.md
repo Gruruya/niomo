@@ -8,11 +8,6 @@ Highlights:
 
 Stability: Early days. Functional.
 
----
-[![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
-[![Minimum supported Nim version](https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400)](https://nim-lang.org)
-[![License](https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366)](LICENSE.md)
-
 Install
 ---
 Install Nim 2.0, here are two options:
@@ -23,5 +18,16 @@ Then, run `nimble install https://github.com/Gruruya/niomo`
 
 Usage
 ---
-See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example. For individual commands pass the `-h` flag `niomo post -h`.  
+```bash
+niomo post -a first-account Hello world!
+niomo show (id returned by last command)
+```
+
+See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example. For individual commands pass the `-h` flag `niomo post -h`.
+
 Commands can be shortened to any unique string, so `niomo a l` is equal to `niomo account list`.
+
+---
+[![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
+[![Minimum supported Nim version](https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400)](https://nim-lang.org)
+[![License](https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366)](LICENSE.md)
