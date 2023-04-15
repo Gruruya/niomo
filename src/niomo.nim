@@ -48,7 +48,7 @@ type Config = object
   account = ""
   accounts: LPTabz[string, string, int8, 6]
   relays: LPSetz[string, int8, 6]
-  relays_known: LPSetz[string, int8, 6] # TODO: Collect relays from posts
+  relays_known: LPSetz[string, int8, 6] # TODO: Collect relays from posts, NIP-65
 
 template save(config: Config, path: string) =
   var s = newFileStream(path, fmWrite)
@@ -60,9 +60,10 @@ template getConfig: Config =
   var config = Config()
   if not fileExists(configPath):
     createDir(parentDir configPath)
-    config.relays_known.incl "wss://relay.snort.social" # Default relays
-    config.relays.incl "wss://relay.snort.social"       #
-    config.save(configPath)
+    for relay in ["wss://relay.snort.social"]: # Default relays
+      config.relays_known.incl relay
+      config.relays.incl relay
+      config.save(configPath)
   else:
     var s = newFileStream(configPath)
     load(s, config)
@@ -106,7 +107,7 @@ template getKeypair(account: Option[string]): Keypair =
       parseSecretKey(unsafeGet account).toKeypair
     except:
       config.keypair(unsafeGet account)
-# What
+
 ##### CLI Commands #####
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
@@ -240,9 +241,8 @@ proc accountCreate*(echo = false, overwrite = false, names: seq[string]): string
         return
       except ValueError: discard
     for name in names:
-      if name notin config.accounts or overwrite:
-        let kp = newKeypair()
-        result &= config.setAccount(name, kp, echo)
+      if overwrite or name notin config.accounts:
+        result &= config.setAccount(name, newKeypair(), echo)
       else:
         result &= name & " already exists, refusing to overwrite\n"
 
@@ -291,8 +291,9 @@ proc accountSet*(name: seq[string]): string =
   ##
   ## without an account set, a new key will be generated every time you post
   var config = getConfig()
+
   if name.len == 0:
-    result = "Unsetting default account. A new random key will be generated for every post."
+    echo "Unsetting default account. A new random key will be generated for every post."
     config.account = ""
     config.save(configPath)
     return
@@ -307,10 +308,12 @@ proc accountSet*(name: seq[string]): string =
   if name in config.accounts.keys.toSeq:
     setAcc name
     return
+
   for existing in config.accounts.keys:
     if existing.startsWith(name):
       setAcc existing
       return
+
   echo name, " doesn't exist, creating it"
   echo accountCreate(names = @[name])
   setAcc(name)
@@ -319,13 +322,18 @@ proc relayEnable*(relays: seq[string]): int =
   ## enable relays to broadcast your posts with
   var config = getConfig()
   for relay in relays:
-    try:
+    try: # Parse as index
       let index = parseInt(relay)
-      if index < config.relays_known.len:
-        echo "Enabling ", config.relays_known.nthKey(index)
-        config.relays.incl config.relays_known.nthKey(index)
+      if index <= config.relays_known.len and index > 0:
+        let relay = config.relays_known.nthKey(index - 1)
+        if relay in config.relays:
+          echo relay & " is already enabled"
+        else:
+          echo "Enabling ", relay
+          config.relays.incl relay
       else:
         echo $index & " is out of bounds, there are only " & $config.relays_known.len & " known relays."
+
     except ValueError:
       if relay in config.relays_known:
         echo "Enabling ", relay
@@ -351,8 +359,8 @@ proc relayDisable*(relays: seq[string]): int =
     else:
       try: # Disable by index
         let index = parseInt(relay)
-        if index < config.relays_known.len:
-          disable(config.relays_known.nthKey(index))
+        if index <= config.relays_known.len and index > 0:
+          disable(config.relays_known.nthKey(index - 1))
       except ValueError: discard # Ignore request to disable non-existant relay
   config.save(configPath)
 
@@ -370,8 +378,8 @@ proc relayRemove*(relays: seq[string]): int =
     else:
       try: # Remove by index
         let index = parseInt(relay)
-        if index < config.relays_known.len:
-          toRemove.add config.relays_known.nthKey(index)
+        if index <= config.relays_known.len and index > 0:
+          toRemove.add config.relays_known.nthKey(index - 1)
       except ValueError: discard # Ignore request to remove non-existant relay
   config.save(configPath)
   if toRemove.len > 0:
@@ -384,7 +392,7 @@ proc relayList*(prefixes: seq[string]): string =
   let config = getConfig()
   for i, relay in pairs[string, int8, 6](config.relays_known):
     if prefixes.len == 0 or any(prefixes, prefix => relay.startsWith(prefix)):
-      echo $i, (if relay in config.relays: " * " else: " "), relay
+      echo $(i + 1), (if relay in config.relays: " * " else: " "), relay
   # could put enabled relays first
 
 when isMainModule:
