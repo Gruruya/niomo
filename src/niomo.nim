@@ -59,10 +59,11 @@ template getConfig: Config =
   let configPath {.inject.} = os.getConfigDir() / "niomo/config.yaml"
   var config = Config()
   if not fileExists(configPath):
-    createDir(configPath.parentDir)
+    createDir(parentDir configPath)
+    config.relays_known.incl "wss://relay.snort.social" # Default relays
+    config.relays.incl "wss://relay.snort.social"       #
     config.save(configPath)
   else:
-    # TODO: Check if it's empty
     var s = newFileStream(configPath)
     load(s, config)
     s.close()
