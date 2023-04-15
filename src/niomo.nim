@@ -24,7 +24,7 @@ import
 
 from std/terminal import getch
 
-###### Types and helper procs ######
+###### Types and helper utils ######
 
 template usage(why: string): untyped =
   raise newException(HelpError, why & " ${HELP}")
