@@ -159,9 +159,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
         elif entity is SkXOnlyPublicKey:
           filter.authors = @[entity.toHex]
     except InvalidBech32Error, UnknownTLVError:
-      if postid.len == 0:
-        filter.authors.add defaultKeypair.pubkey.toHex
-      else:
+      if postid.len != 0:
         filter.ids = @[postid]
     if -1 in filter.kinds:
       filter.kinds = @[]
