@@ -137,8 +137,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   ## show a post
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
-  var ids = ids                # Workaround cligen default opts
-  if ids.len == 0: ids = @[""] #
+  var ids = ids
+  if ids.len == 0: ids = @[""] # Workaround cligen default opts
   var config = getConfig()
 
   template format(postid: string): untyped =
@@ -190,21 +190,30 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
               echo msg.toJson
             else:
               when msg is SMEvent:
-                echo "@" & $msg.event.pubkey
-                echo $msg.event.created_at & ":"
-                if msg.event.kind == 6: # repost
-                  if msg.event.content.startsWith("{"): # is a stringified post
-                    echo msg.event.content.fromJson(events.Event).content
+                template event: untyped = msg.event
+                echo "@" & $event.pubkey
+                echo $event.created_at & ":"
+                for tag in event.tags:
+                  if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p"):
+                    config.relays_known.incl tag[2] # collect relays
+                case event.kind:
+                of 2: # recommend relay
+                  if event.content.startsWith('"'):
+                    config.relays_known.incl event.content
+                of 6: # repost
+                  if event.content.startsWith("{"): # is a stringified post
+                    echo event.content.fromJson(events.Event).content
                   else:
-                    echo msg.event.content
+                    echo event.content
                   # TODO: else fetch from #e tag
                 else:
-                  echo msg.event.content
+                  echo event.content
             when msg is SMEose: break
             else: echo ""
         except: discard
       # ws.send(CMClose(id: reqid).toJson)
       ws.close()
+      config.save(configPath)
 
 ### Config management ###
 
