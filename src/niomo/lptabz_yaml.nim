@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with niomo.  If not, see <http://www.gnu.org/licenses/>.
 
-## YAML serialization for LPTabz types
+## YAML serialization for c-blake's adix/LPTabz
 
 import pkg/yaml/[serialization, presenter, taglib, private/internal], pkg/[adix/lptabz]
 
@@ -30,8 +30,7 @@ proc safeTagUri(tag: Tag): string {.raises: [].} =
     var uri = $tag
     # '!' is not allowed inside a tag handle
     if uri.len > 0 and uri[0] == '!': uri = uri[1..^1]
-    # ',' is not allowed after a tag handle in the suffix because it's a flow
-    # indicator
+    # ',' is not allowed after a tag handle in the suffix because it's a flow indicator
     for i in countup(0, uri.len - 1):
       if uri[i] == ',': uri[i] = ';'
     return uri
@@ -84,7 +83,7 @@ proc constructObject*[K,Z,z](s: var YamlStream, c: ConstructionContext, result: 
     var item: K
     constructChild(s, c, item)
     try: result.incl(item)
-    except IOError: raise s.constructionError(event.startPos, "IOError when attempting to include into LPSetz") # should use proper mark rather than the start (event.startPos)
+    except IOError: raise s.constructionError(event.startPos, "IOError when attempting to include into LPSetz") # TODO: Use proper mark rather than the start (event.startPos)
   discard s.next()
 
 proc representObject*[K,Z,z](value: LPSetz[K,Z,z], ts: TagStyle, c: SerializationContext, tag: Tag) =
@@ -94,5 +93,4 @@ proc representObject*[K,Z,z](value: LPSetz[K,Z,z], ts: TagStyle, c: Serializatio
     representChild(item, childTagStyle, c)
   c.put(endSeqEvent())
 
-{.pop inline.}
 # End of YAML serialization
