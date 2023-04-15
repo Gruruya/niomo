@@ -8,7 +8,7 @@ inputs:
   version:
     description: 'Version of Nim.'
     required: false
-    default: 'stable'
+    default: 'devel'
   GITHUB_TOKEN:
     description: 'Your GitHub token.'
     required: true

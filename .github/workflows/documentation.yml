@@ -26,10 +26,10 @@ jobs:
     - name: Install Nim, then generate docs
       uses: './.github/workflows/nim-run'
       with:
-        run: nimble doc -y --project src/nimtemplate.nim --outDir:htmldocs
+        run: nimble doc -y --project src/niomo.nim --outDir:htmldocs
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - run: ln -s nimtemplate.html htmldocs/index.html
+    - run: ln -s niomo.html htmldocs/index.html
 
     - name: Setup HTML for GitHub Pages
       uses: actions/configure-pages@v3
