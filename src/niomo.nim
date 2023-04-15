@@ -148,7 +148,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   if echo:
     for id in ids:
-      echo format(id)
+      echo format(id).toJson
     return
 
   var config = getConfig()
