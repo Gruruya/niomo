@@ -6,8 +6,6 @@ Highlights:
 * Pass -e to any command to echo the JSON rather than submitting it.
 * Posting without an account will generate a random key for every post.
 
-Stability: Early days. Functional.
-
 Install
 ---
 Install Nim 2.0, here are two options:
