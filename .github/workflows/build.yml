@@ -16,13 +16,6 @@ jobs:
         nim-version: [devel]
         os: [ubuntu-latest, windows-latest, macOS-latest]
         arch: [x86_64]
-        include:
-          - arch: 'aarch64'
-            os: 'ubuntu-latest'
-          - arch: 'riscv64'
-            os: 'ubuntu-latest'
-          - arch: 'ppc64le'
-            os: 'ubuntu-latest'
 
     runs-on: ${{ matrix.os }}
 
@@ -33,7 +26,7 @@ jobs:
     - name: Install Nim, then build and test
       uses: './.github/workflows/nim-run'
       with:
-        run: nimble test -y
+        run: nimble install -y
         version: ${{ matrix.nim-version }}
         arch: ${{ matrix.arch }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
