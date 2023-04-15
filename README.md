@@ -4,7 +4,7 @@ Command-line client for Nostr.
 Experimental, very new and featureless.
 
 Highlights:
-* Pass -e to any command to echo the JSON rather than submitting it.
+* Pass -e to echo JSON rather than submitting it.
 * Posting without an account will generate a random key for every post.
 
 Install
