@@ -282,25 +282,29 @@ proc accountSet*(name: seq[string]): string =
   ##
   ## without an account set, a new key will be generated every time you post
   var config = getConfig()
+  if name.len == 0:
+    result = "Unsetting default account. A new random key will be generated for every post."
+    config.account = ""
+    config.save(configPath)
+    return
+
+  let name = name.join(" ")
+
   template setAcc(newAcc: string) =
     result = "Setting default account to \"" & newAcc & '"'
     config.account = newAcc
     config.save(configPath)
 
-  if name.len > 1 or name.len == 0:
-    result = "Unsetting default account. A new random key will be generated for every post."
-    config.account = ""
-    config.save(configPath)
+  if name in config.accounts.keys.toSeq:
+    setAcc name
     return
-  if name[0] in config.accounts.keys.toSeq:
-    setAcc name[0]
-    return
-  else:
-    for existing in config.accounts.keys:
-      if existing.startsWith(name[0]):
-        setAcc existing
-        return
-  "No account found for " & name[0]
+  for existing in config.accounts.keys:
+    if existing.startsWith(name):
+      setAcc existing
+      return
+  echo name, " doesn't exist, creating it"
+  echo accountCreate(names = @[name])
+  setAcc(name)
 
 proc relayEnable*(relays: seq[string]): int =
   ## enable relays to broadcast your posts with
