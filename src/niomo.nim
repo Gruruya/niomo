@@ -48,7 +48,7 @@ type Config = object
   account = ""
   accounts: LPTabz[string, string, int8, 6]
   relays: LPSetz[string, int8, 6]
-  relays_known: LPSetz[string, int8, 6] # collect relays from posts
+  relays_known: LPSetz[string, int8, 6] # TODO: Collect relays from posts
 
 template save(config: Config, path: string) =
   var s = newFileStream(path, fmWrite)
@@ -121,8 +121,10 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
 proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
   # TODO: Reversing output
+  # TODO: Following and "niomo show" without arguments showing a feed
   var ids = ids                # Workaround cligen default opts
   if ids.len == 0: ids = @[""] #
+  var config = getConfig()
 
   template format(postid: string): untyped =
     var filter = Filter(limit: limit, kinds: kinds)
@@ -141,7 +143,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
           filter.tags = @[@["#d", entity.id]]
         elif entity is SkXOnlyPublicKey:
           filter.authors = @[entity.toHex]
-    except InvalidBech32Error, UnknownTLVError: filter.ids = @[postid]
+    except InvalidBech32Error, UnknownTLVError:
+      if postid.len == 0:
+        filter.authors.add defaultKeypair.pubkey.toHex
+      else:
+        filter.ids = @[postid]
     if -1 in filter.kinds:
       filter.kinds = @[]
     CMRequest(id: randomID(), filter: filter)
@@ -151,7 +157,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo format(id).toJson
     return
 
-  var config = getConfig()
   var relays = config.relays
   if relays.len == 0:
     usage "No relays configured, add relays with `niomo relay enable`"
@@ -270,7 +275,7 @@ proc accountList*(prefixes: seq[string]): string =
       let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
       result &= account & ":\nPrivate key: " & $kp.seckey & "\nPublic key: " & $kp.pubkey & "\n"
   if result.len == 0:
-    result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and have a different random key for every post."
+    result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
 
 proc accountSet*(name: seq[string]): string =
   ## change what account to use by default, pass no arguments to be anonymous
