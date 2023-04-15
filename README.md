@@ -1,32 +1,27 @@
-# nimtemplate:scroll:
+# niomo
 
-A template to jump start your Nim library or project.
+Command-line client for Nostr.
 
-* Tests using [balls](https://github.com/disruptek/balls)
-* GitHub Actions [workflows](../../actions)
-  * Runs tests on multiple OSes and ISAs
-  * Builds and deploys [API reference on GitHub Pages](https://Gruruya.github.io/nimtemplate/nimtemplate.html)
+Highlights:
+* Pass -e to any command to echo the JSON rather than submitting it.
+* Posting without an account will generate a random key for every post.
 
-_Click [here](../../../nimtemplate/generate) to begin_  
+Stability: Early days. Functional.
 
 ---
 [![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
-[![Minimum supported Nim version](https://img.shields.io/badge/Nim-1.6.12+-informational?logo=Nim&labelColor=232733&color=F3D400)](https://nim-lang.org)
-[![License](https://img.shields.io/github/license/Gruruya/nimtemplate?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366)](LICENSE.md)
+[![Minimum supported Nim version](https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400)](https://nim-lang.org)
+[![License](https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366)](LICENSE.md)
+
+Install
+---
+Install Nim 2.0, here are two options:
+* See `Installing Nim 2.0 RC2` at the Nim-lang blog [here](https://nim-lang.org/blog/2023/03/31/version-20-rc2.html)
+* Install [choosenim](https://github.com/dom96/choosenim#installation) and run `choosenim devel`
+
+Then, run `nimble install https://github.com/Gruruya/niomo`
 
 Usage
 ---
-You're gonna want to change the names in the project. If you're on Linux you can do it like this:
-```sh
-# Change these to define your new project name and GitHub username
-export GHUSER=Gruruya
-export PROJNAME=nimtemplate
-
-# Change text in the repo
-sed -i "s/Gruruya/$GHUSER/g" README.md nimtemplate.nimble
-sed -i "s/nimtemplate/$PROJNAME/g" README.md nimtemplate.nimble src/nimtemplate.nim tests/test.nim .github/workflows/documentation.yml
-rename nimtemplate "$PROJNAME" * src/*
-```
-
-#### Note on the License
-You can change the license freely in your project generated with this template.
+See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example. For individual commands pass the `-h` flag `niomo post -h`.
+Commands can be shortened to any unique string, so `niomo a l` is equal to `niomo account list`.

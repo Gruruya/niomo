@@ -6,7 +6,7 @@
 # To run these tests, simply execute `nimble test`.
 
 import pkg/balls
-import ./nimtemplate
+import ./niomo
 
 suite "example":
   block operation:
