@@ -27,7 +27,7 @@ from std/terminal import getch
 ##### Types and helper procs #####
 
 template usage(why: string): untyped =
-  raise newException(HelpError, "No private keys given, nothing to import. ${HELP}")
+  raise newException(HelpError, why & " ${HELP}")
 
 proc promptYN(default: bool): bool =
   while true:
@@ -35,8 +35,8 @@ proc promptYN(default: bool): bool =
     of 'y', 'Y':
       return true
     of 'n', 'N':
-      return false # RET
-    of '\13':
+      return false
+    of '\13': # RET
       return default
     of '\3', '\4': # C-c, C-d
       return default
@@ -192,7 +192,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
               echo msg.toJson
             else:
               when msg is SMEvent:
-                # echo "@" & $msg.event.pubkey & "\n" & $msg.event.id
+                echo "@" & $msg.event.pubkey
                 echo $msg.event.created_at & ":"
                 if msg.event.kind == 6: # repost
                   if msg.event.content.startsWith("{"): # is a stringified post
@@ -216,7 +216,7 @@ template randomAccount: (string, Keypair) =
     name = generateAlias(kp.seckey.toPublicKey)
   (name, kp)
 
-template setAccount(config: Config, name: string, kp: Keypair, echo: bool): string =
+template addAcc(config: Config, name: string, kp: Keypair, echo: bool): string =
   if not echo:
     config.accounts[name] = $kp.seckey
     config.save(configPath)
@@ -229,7 +229,7 @@ proc accountCreate*(echo = false, overwrite = false, names: seq[string]): string
   if names.len == 0:
     # Generate a new account with a random name based on its public key
     var (name, kp) = randomAccount()
-    return config.setAccount(name, kp, echo)
+    return config.addAcc(name, kp, echo)
   else:
     if names.len == 1:
       # Check if `name` is a number, if so, create that many accounts
@@ -237,12 +237,12 @@ proc accountCreate*(echo = false, overwrite = false, names: seq[string]): string
         let num = parseInt(names[0])
         for _ in 1..num:
           var (name, kp) = randomAccount()
-          result &= config.setAccount(name, kp, echo)
+          result &= config.addAcc(name, kp, echo)
         return
       except ValueError: discard
     for name in names:
       if overwrite or name notin config.accounts:
-        result &= config.setAccount(name, newKeypair(), echo)
+        result &= config.addAcc(name, newKeypair(), echo)
       else:
         result &= name & " already exists, refusing to overwrite\n"
 
@@ -254,39 +254,9 @@ proc accountImport*(echo = false, private_keys: seq[string]): int =
   for key in privateKeys:
     let seckey = parseSecretKey(key)
     let kp = seckey.toKeypair
-    echo config.setAccount(generateAlias(seckey.toPublicKey), kp, echo)
-      
-proc accountRemove*(names: seq[string]): int =
-  ## remove accounts
-  if names.len == 0:
-    usage "No account names given, nothing to remove"
-  else:
-    var config = getConfig()
-    for name in names: # Only do exact match
-      if name in config.accounts:
-        echo "About to remove record of " & name & "'s private key, are you sure? [Y/n]"
-        if promptYN(true):
-          echo "Removing account: " & name & "\n" & display(config.keypair(name))
-          if config.account == name: config.account = ""
-          config.accounts.del(name)
-    config.save(configPath)
+    echo config.addAcc(generateAlias(seckey.toPublicKey), kp, echo)
 
-proc accountList*(prefixes: seq[string]): string =
-  ## list accounts (optionally) only showing those whose names start with any of the given `prefixes`
-  let config = getConfig()
-  if config.account != "":
-        echo "Default account: " & config.account
-  else: echo "No default account set, a random key will be generated every time you post"
-
-  for account, key in config.accounts.pairs:
-    if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
-      let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
-      result &= account & ":\n" & display(kp)
-
-  if result.len == 0:
-    result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
-
-proc accountSet*(name: seq[string]): string =
+proc accountEnable*(name: seq[string]): string =
   ## change what account to use by default, pass no arguments to be anonymous
   ##
   ## without an account set, a new key will be generated every time you post
@@ -309,14 +279,39 @@ proc accountSet*(name: seq[string]): string =
     setAcc name
     return
 
-  for existing in config.accounts.keys:
-    if existing.startsWith(name):
-      setAcc existing
-      return
-
   echo name, " doesn't exist, creating it"
   echo accountCreate(names = @[name])
-  setAcc(name)
+  accountEnable(@[name])
+
+proc accountRemove*(names: seq[string]): int =
+  ## remove accounts
+  if names.len == 0:
+    usage "No account names given, nothing to remove"
+  else:
+    var config = getConfig()
+    for name in names: # Only do exact match
+      if name in config.accounts:
+        echo "About to remove record of " & name & "'s private key, are you sure? [y/N]"
+        if promptYN(false):
+          echo "Removing account: " & name & "\n" & display(config.keypair(name))
+          if config.account == name: config.account = ""
+          config.accounts.del(name)
+    config.save(configPath)
+
+proc accountList*(prefixes: seq[string]): string =
+  ## list accounts (optionally) only showing those whose names start with any of the given `prefixes`
+  let config = getConfig()
+  if config.account != "":
+        echo "Default account: " & config.account
+  else: echo "No default account set, a random key will be generated every time you post"
+
+  for account, key in config.accounts.pairs:
+    if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
+      let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
+      result &= account & ":\n" & display(kp)
+
+  if result.len == 0:
+    result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
 
 proc relayEnable*(relays: seq[string]): int =
   ## enable relays to broadcast your posts with
@@ -343,10 +338,17 @@ proc relayEnable*(relays: seq[string]): int =
       config.relays.incl relay
   config.save(configPath)
 
-proc relayDisable*(relays: seq[string]): int =
+proc relayDisable*(delete = false, relays: seq[string]): int =
   ## stop sending posts to specified relays
   template disable(relay: string) =
-    if relay in config.relays:
+    if delete:
+      if relay in config.relays_known:
+        echo "Deleting ", relay
+        config.relays.excl relay
+        config.relays_known.excl relay
+      else:
+        echo relay, " doesn't exist"
+    elif relay in config.relays:
       echo "Disabling ", relay
       config.relays.excl relay
     else:
@@ -364,31 +366,10 @@ proc relayDisable*(relays: seq[string]): int =
       except ValueError: discard # Ignore request to disable non-existant relay
   config.save(configPath)
 
-proc relayRemove*(relays: seq[string]): int =
-  ## remove urls from known relays
-  if relays.len == 0:
-    usage "No relay urls or indexes given, nothing to remove"
-  var config = getConfig()
-  var toRemove: seq[string]
-  for relay in relays:
-    if relay in config.relays_known:
-      echo "Removing ", relay, " from relay list"
-      config.relays.excl relay
-      config.relays_known.excl relay
-    else:
-      try: # Remove by index
-        let index = parseInt(relay)
-        if index <= config.relays_known.len and index > 0:
-          toRemove.add config.relays_known.nthKey(index - 1)
-      except ValueError: discard # Ignore request to remove non-existant relay
-  config.save(configPath)
-  if toRemove.len > 0:
-    return relayRemove(toRemove)
-
 proc relayList*(prefixes: seq[string]): string =
   ## list relay urls and their indexes. enable/disable/remove can use the index instead of a url.
   ##
-  ## optionally filters shown relays to only those with any of the given `prefixes`
+  ## optionally filters shown relays to only those matching a given `prefix`
   let config = getConfig()
   for i, relay in pairs[string, int8, 6](config.relays_known):
     if prefixes.len == 0 or any(prefixes, prefix => relay.startsWith(prefix)):
@@ -409,15 +390,14 @@ when isMainModule:
   dispatchMultiGen(
     ["accounts"],
     [accountCreate, cmdName = "create", help = {"echo": "generate and print accounts without saving", "overwrite": "overwrite existing accounts"}, dispatchName = "aCreate"],
+    [accountEnable, cmdName = "enable", dispatchName = "aEnable", usage = "$command $args\n${doc}"],
     [accountImport, cmdName = "import", dispatchName = "aImport"],
-    [accountSet, cmdName = "set", dispatchName = "aSet", usage = "$command $args\n${doc}"],
     [accountRemove, cmdName = "remove", dispatchName = "aRemove", usage = "$command $args\n${doc}"], # alias rm
     [accountList, cmdName = "list", dispatchName = "aList", usage = "$command $args\n${doc}"])
   dispatchMultiGen(
     ["relay"],
     [relayEnable, cmdName = "enable", dispatchName = "rEnable", usage = "$command $args\n${doc}"],
-    [relayDisable, cmdName = "disable", dispatchName = "rDisable", usage = "$command $args\n${doc}"],
-    [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
+    [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
   # dispatchMultiGen(
   #   ["fetch"],
