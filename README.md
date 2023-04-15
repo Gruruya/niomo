@@ -23,9 +23,10 @@ niomo post -a first-account Hello world!
 niomo show (id returned by last command)
 ```
 
-See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example. For individual commands pass the `-h` flag `niomo post -h`.
+See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
+For individual commands pass the `-h` flag `niomo post -h`
 
-Commands can be shortened to any unique string, so `niomo a l` is equal to `niomo account list`.
+Commands can be shortened to any unique string, so `niomo a l` is equal to `niomo account list`
 
 ---
 [![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
