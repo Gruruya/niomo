@@ -20,7 +20,7 @@ Usage
 ---
 ```bash
 niomo post -a first-account Hello world!
-niomo show (id returned by last command)
+niomo show
 ```
 
 See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
