@@ -1,6 +1,7 @@
 # niomo
 
 Command-line client for Nostr.
+Experimental, very new and featureless.
 
 Highlights:
 * Pass -e to any command to echo the JSON rather than submitting it.
