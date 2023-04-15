@@ -24,7 +24,7 @@ import
 
 from std/terminal import getch
 
-##### Types and helper procs #####
+###### Types and helper procs ######
 
 template usage(why: string): untyped =
   raise newException(HelpError, why & " ${HELP}")
@@ -108,7 +108,7 @@ template getKeypair(account: Option[string]): Keypair =
     except:
       config.keypair(unsafeGet account)
 
-##### CLI Commands #####
+###### CLI Commands ######
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
   ## make a post
@@ -208,6 +208,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       # ws.send(CMClose(id: reqid).toJson)
       ws.close()
 
+### Config management ###
+
 template randomAccount: (string, Keypair) =
   var kp = newKeypair()
   var name = generateAlias(kp.pubkey)
@@ -270,13 +272,10 @@ proc accountEnable*(name: seq[string]): string =
 
   let name = name.join(" ")
 
-  template setAcc(newAcc: string) =
-    result = "Setting default account to \"" & newAcc & '"'
-    config.account = newAcc
-    config.save(configPath)
-
   if name in config.accounts.keys.toSeq:
-    setAcc name
+    result = "Setting default account to \"" & name & '"'
+    config.account = name
+    config.save(configPath)
     return
 
   echo name, " doesn't exist, creating it"
@@ -366,6 +365,10 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
       except ValueError: discard # Ignore request to disable non-existant relay
   config.save(configPath)
 
+proc relayRemove(relays: seq[string]): int =
+  ## remove a relay
+  relayDisable(delete = true, relays = relays)
+
 proc relayList*(prefixes: seq[string]): string =
   ## list relay urls and their indexes. enable/disable/remove can use the index instead of a url.
   ##
@@ -376,6 +379,7 @@ proc relayList*(prefixes: seq[string]): string =
       echo $(i + 1), (if relay in config.relays: " * " else: " "), relay
   # could put enabled relays first
 
+###### CLI ######
 when isMainModule:
   import pkg/[cligen/argcvt]
   # taken from c-blake "https://github.com/c-blake/cligen/issues/212#issuecomment-1167777874"
@@ -398,6 +402,7 @@ when isMainModule:
     ["relay"],
     [relayEnable, cmdName = "enable", dispatchName = "rEnable", usage = "$command $args\n${doc}"],
     [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
+    [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
   # dispatchMultiGen(
   #   ["fetch"],
