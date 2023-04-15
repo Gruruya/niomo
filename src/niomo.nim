@@ -84,6 +84,16 @@ template keypair(config: Config, name: string): Keypair =
     config.save(configPath)
     created
 
+func parseSecretKey(key: string): SkSecretKey {.inline.} =
+  if key.len == 64:
+    return SkSecretKey.fromHex(key).tryGet
+  elif key.len == 63 and key.startsWith("nsec1"):
+    return SkSecretKey.fromRaw(decode("nsec1", key)).tryGet
+  raise newException(ValueError, "Unknown private key format. Supported: hex, bech32")
+
+  doAssert false # Silence compiler, will never reach
+  return SkSecretKey.fromHex(key).tryGet #
+
 template defaultKeypair: Keypair =
   if config.account == "": newKeypair()
   else: config.keypair(config.account)
@@ -91,8 +101,12 @@ template defaultKeypair: Keypair =
 template getKeypair(account: Option[string]): Keypair =
   if account.isNone: defaultKeypair()
   elif account == some "": newKeypair()
-  else: config.keypair(unsafeGet account)
-
+  else:
+    try: # Parse as private key
+      parseSecretKey(unsafeGet account).toKeypair
+    except:
+      config.keypair(unsafeGet account)
+# What
 ##### CLI Commands #####
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
@@ -238,13 +252,7 @@ proc accountImport*(echo = false, private_keys: seq[string]): int =
   if privateKeys.len == 0:
     usage "No private keys given, nothing to import. ${HELP}"
   for key in privateKeys:
-    let seckey =
-      if key.len == 64:
-        SkSecretKey.fromHex(key).tryGet
-      elif key.len == 63 and key.startsWith("nsec1"):
-        SkSecretKey.fromRaw(decode("nsec1", key)).tryGet
-      else:
-        usage "Unknown private key format. Supported: hex, bech32"
+    let seckey = parseSecretKey(key)
     let kp = seckey.toKeypair
     echo config.setAccount(generateAlias(seckey.toPublicKey), kp, echo)
       
@@ -254,12 +262,11 @@ proc accountRemove*(names: seq[string]): int =
     usage "No account names given, nothing to remove"
   else:
     var config = getConfig()
-    for name in names:
+    for name in names: # Only do exact match
       if name in config.accounts:
-        echo "About to remove record of ", name, "'s private key, are you sure? [Y/n]"
+        echo "About to remove record of " & name & "'s private key, are you sure? [Y/n]"
         if promptYN(true):
-          #TODO prompt are you sure?
-          echo "Removing account: ", name, "\nPrivate key: " & config.accounts[name]
+          echo "Removing account: " & name & "\n" & display(config.keypair(name))
           if config.account == name: config.account = ""
           config.accounts.del(name)
     config.save(configPath)
@@ -270,10 +277,12 @@ proc accountList*(prefixes: seq[string]): string =
   if config.account != "":
         echo "Default account: " & config.account
   else: echo "No default account set, a random key will be generated every time you post"
+
   for account, key in config.accounts.pairs:
     if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
       let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
-      result &= account & ":\nPrivate key: " & $kp.seckey & "\nPublic key: " & $kp.pubkey & "\n"
+      result &= account & ":\n" & display(kp)
+
   if result.len == 0:
     result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
 
