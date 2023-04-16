@@ -391,9 +391,9 @@ proc relayAdd*(enable = true, relays: seq[string]): int =
         echo "Enabling ", relay
       else:
         echo "Adding and enabling ", relay
-        config.relays_known.incl relay
+      config.relays.incl relay
     else: echo "Adding ", relay
-    config.relays.incl relay
+    config.relays_known.incl relay
   config.save(configPath)
 
 proc relayEnable*(relays: seq[string]): int =
@@ -412,7 +412,7 @@ proc relayEnable*(relays: seq[string]): int =
       else:
         echo $index & " is out of bounds, there are only " & $config.relays_known.len & " known relays."
 
-    except ValueError:
+    except ValueError: # Parse as url
       if relay in config.relays_known:
         echo "Enabling ", relay
       else:
@@ -489,7 +489,7 @@ when isMainModule:
     [accountList, cmdName = "list", dispatchName = "aList", usage = "$command $args\n${doc}"])
   dispatchMultiGen(
     ["relay"],
-    [relayAdd, cmdName = "add", dispatchName = "rAdd", usage = "$command $args\n${doc}"],
+    [relayAdd, cmdName = "add", dispatchName = "rAdd"],
     [relayEnable, cmdName = "enable", dispatchName = "rEnable", usage = "$command $args\n${doc}"],
     [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
     [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
@@ -498,4 +498,4 @@ when isMainModule:
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
     [post],
     [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "import", "remove", "list"]],
-    [relay, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["enable", "disable", "remove", "list"]])
+    [relay, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
