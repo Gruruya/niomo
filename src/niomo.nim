@@ -18,8 +18,8 @@
 ## Command line client for Nostr.
 
 import
-  std/[os, strutils, sequtils, sugar, options, streams, random],
-  pkg/[nmostr, yaml, adix/lptabz, cligen, whisky],
+  std/[os, strutils, sequtils, sugar, options, streams, random, asyncdispatch],
+  pkg/[nmostr, yaml, adix/lptabz, cligen, ws],
   ./niomo/alias, ./niomo/lptabz_yaml
 
 from std/terminal import getch
@@ -124,18 +124,16 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
     echo post
     return
 
-  proc send(p: tuple[relay: string, post: string]) {.thread, nimcall.} =
-    let ws = newWebSocket(p.relay)
-    ws.send(p.post)
-    let response = ws.receiveMessage(10000)
-    echo:
-      if response.isNone: "Error posting to " & p.relay
-      else: response.toJson
+  proc send(relay, post: string) {.async.} =
+    let ws = await newWebSocket(relay)
+    await ws.send(post)
+    echo await ws.receiveStrPacket()
+    ws.close()
 
-  var posting = newSeq[Thread[(tuple[relay: string, post: string])]](config.relays.len)
-  for i, relay in pairs[string, int8, 6](config.relays):
-    createThread posting[i], send, (relay, post)
-  joinThreads(posting)
+  var tasks = newSeq[Future[void]](config.relays.len)
+  for relay in config.relays:
+    tasks.add send(relay, post)
+  waitFor all(tasks)
 
 proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
@@ -174,25 +172,27 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo parse(id).toJson
     return
 
-  template request[K,Z,z](req: string, relays: sink LPSetz[K, Z, z]) =
-    # Call `randomize()` first
-    while relays.len > 0:
-      let relay = relays.nthKey(rand(relays.len - 1))
-      relays.del(relay)
-      request(req, relay)
+  var postIDs = initLPSetz[string, int8, 6]
 
-  proc request(req, relay: string) =
-    let ws = newWebSocket(relay)
-    proc request(req: string) =
-      ws.send(req)
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.}
+
+  proc request(req, relay: string) {.async.} =
+    let ws = await newWebSocket(relay)
+
+    proc request(req: string) {.async.} =
+      var tasks: seq[Future[void]]
+
+      await ws.send(req)
       while true:
-        let optMsg = ws.receiveMessage(10000)
-        if optMsg.isNone or optMsg.unsafeGet.data == "": break
+        let optMsg = await ws.receiveStrPacket()
+        if optMsg == "": break
         try:
-          let msgUnion = optMsg.unsafeGet.data.fromMessage
+          let msgUnion = optMsg.fromMessage
           unpack msgUnion, msg:
+
             if raw:
               echo msg.toJson
+
             else:
               when msg is SMEvent:
                 template event: untyped = msg.event
@@ -227,9 +227,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                             relays.add tag[2]
                     if filter != Filter(limit: 1):
                       if relays.len > 0:
-                        request(CMRequest(id: randomID(), filter: filter).toJson, relays)
+                        tasks.add request(CMRequest(id: randomID(), filter: filter).toJson, relays)
                       else:
-                        request(CMRequest(id: randomID(), filter: filter).toJson)
+                        tasks.add request(CMRequest(id: randomID(), filter: filter).toJson)
                     else:
                       echo header, event.content
 
@@ -246,15 +246,27 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
             when msg is SMEose: break
             else: echo ""
         except: discard
-    request(req)
+        await all(tasks)
+    await request(req)
     ws.close()
+
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.} =
+    # Call `randomize()` first
+    var relays = relays
+    var tasks = newSeqOfCap[Future[void]](relays.len)
+    while relays.len > 0:
+      let relay = relays.nthKey(rand(relays.len - 1))
+      relays.del(relay)
+      tasks.add request(req, relay)
+    await all(tasks)
 
   if config.relays.len == 0:
     usage "No relays configured, add relays with `niomo relay enable`"
-  var relays = config.relays
   randomize()
+  var tasks = newSeqOfCap[Future[void]](ids.len * config.relays.len)
   for id in ids:
-    request(parse(id).toJson, relays)
+    tasks.add request(parse(id).toJson, config.relays)
+  waitFor all(tasks)
   config.save(configPath)
 
 ### Config management ###
