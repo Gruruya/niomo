@@ -234,9 +234,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       echo header, event.content
 
                   if event.content.startsWith("{"): # is a stringified post
-                    echo header
-                    try: echo event.content.fromJson(events.Event).content
-                    except: echoRepost
+                    try:
+                      let parsed = event.content.fromJson(events.Event).content
+                      echo header, parsed
+                    except JsonError:
+                      echoRepost
                   else:
                     echoRepost
 
