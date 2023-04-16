@@ -160,11 +160,14 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
           filter.tags = @[@["#d", entity.id]]
         elif entity is SkXOnlyPublicKey:
           filter.authors = @[entity.toHex]
+
     except InvalidBech32Error, UnknownTLVError:
       if postid.len != 0:
         filter.ids = @[postid]
+
     if -1 in filter.kinds:
       filter.kinds = @[]
+
     CMRequest(id: randomID(), filter: filter)
 
   if echo:
@@ -240,7 +243,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                         tasks.add request(CMRequest(id: randomID(), filter: filter).toJson)
                     else:
                       display event
-
                   if event.content.startsWith("{"): # is a stringified post
                     try:
                       let parsed = event.content.fromJson(events.Event).content
@@ -249,7 +251,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       echoRepost
                   else:
                     echoRepost
-
                 else:
                   display event
 
