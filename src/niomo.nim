@@ -497,5 +497,5 @@ when isMainModule:
   dispatchMulti(["multi", cmdName = "niomo"],
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
     [post],
-    [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "import", "remove", "list"]],
+    [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "enable", "import", "remove", "list"]],
     [relay, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
