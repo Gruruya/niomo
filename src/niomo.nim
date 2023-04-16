@@ -437,7 +437,7 @@ when isMainModule:
   clCfg.version = nimbleFile.fromNimble("version")
   proc argParse[T](dst: var Option[T], dfl: Option[T],
                    a: var ArgcvtParams): bool =
-      var uw: T           # An unwrapped value
+      var uw: T # An unwrapped value
       if argParse(uw, (if dfl.isSome: dfl.get else: uw), a):
         dst = option(uw); return true
   proc argHelp*[T](dfl: Option[T]; a: var ArgcvtParams): seq[string] =
@@ -455,9 +455,6 @@ when isMainModule:
     [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
     [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
-  # dispatchMultiGen(
-  #   ["fetch"],
-  #   [fetchSearch, cmdName = "search", dispatchName = "fSearch", usage = "$command $args\n${doc}"])
   dispatchMulti(["multi", cmdName = "niomo"],
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
     [post],
