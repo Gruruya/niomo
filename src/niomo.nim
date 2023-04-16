@@ -382,6 +382,20 @@ proc accountList*(bech32 = false, prefixes: seq[string]): string =
   if result.len == 0:
     result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
 
+proc relayAdd*(enable = true, relays: seq[string]): int =
+  ## add relays to known relays
+  var config = getConfig()
+  for relay in relays:
+    if enable:
+      if relay in config.relays_known:
+        echo "Enabling ", relay
+      else:
+        echo "Adding and enabling ", relay
+        config.relays_known.incl relay
+    else: echo "Adding ", relay
+    config.relays.incl relay
+  config.save(configPath)
+
 proc relayEnable*(relays: seq[string]): int =
   ## enable relays to broadcast your posts with
   var config = getConfig()
@@ -472,6 +486,7 @@ when isMainModule:
     [accountList, cmdName = "list", dispatchName = "aList", usage = "$command $args\n${doc}"])
   dispatchMultiGen(
     ["relay"],
+    [relayAdd, cmdName = "add", dispatchName = "rAdd", usage = "$command $args\n${doc}"],
     [relayEnable, cmdName = "enable", dispatchName = "rEnable", usage = "$command $args\n${doc}"],
     [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
     [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
