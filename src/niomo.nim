@@ -205,7 +205,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                 template display(event: events.Event) =
                   if event.id notin foundIDs:
                     foundIDs.incl event.id
-                    echo header, event.content
+                    echo header, event.content, "\n"
 
                 for tag in event.tags: # collect relays
                   if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
@@ -253,7 +253,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                   display event
 
             when msg is SMEose: break
-            else: echo ""
         except: discard
         await all(tasks)
     await request(req)
