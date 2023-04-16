@@ -145,11 +145,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   if ids.len == 0: ids = @[""] # Workaround cligen default opts
   var config = getConfig()
 
-  template format(postid: string): untyped =
+  template parse(postid: string): untyped =
     var filter = Filter(limit: limit, kinds: kinds)
     try:
       # TODO: Get relays as well
-      let bech32 = fromNostrBech32(postid) # Check if it's a formatted bech32 string
+      let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
       unpack bech32, entity:
         when entity is NNote:
           filter.ids = @[entity.id.toHex]
@@ -171,7 +171,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   if echo:
     for id in ids:
-      echo format(id).toJson
+      echo parse(id).toJson
     return
 
   template request[K,Z,z](req: string, relays: sink LPSetz[K, Z, z]) =
@@ -183,67 +183,70 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   proc request(req, relay: string) =
     let ws = newWebSocket(relay)
-    ws.send(req)
-    while true:
-      let optMsg = ws.receiveMessage(10000)
-      if optMsg.isNone or optMsg.unsafeGet.data == "": break
-      try:
-        let msgUnion = optMsg.unsafeGet.data.fromMessage
-        unpack msgUnion, msg:
-          if raw:
-            echo msg.toJson
-          else:
-            when msg is SMEvent:
-              template event: untyped = msg.event
-              template header =
-                echo "@" & $event.pubkey
-                echo $event.created_at & ":"
+    proc request(req: string) =
+      ws.send(req)
+      while true:
+        let optMsg = ws.receiveMessage(10000)
+        if optMsg.isNone or optMsg.unsafeGet.data == "": break
+        try:
+          let msgUnion = optMsg.unsafeGet.data.fromMessage
+          unpack msgUnion, msg:
+            if raw:
+              echo msg.toJson
+            else:
+              when msg is SMEvent:
+                template event: untyped = msg.event
+                template header =
+                  echo "@" & $event.pubkey
+                  echo $event.id
+                  echo $event.created_at & ":"
 
-              for tag in event.tags:
-                if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
-                  config.relays_known.incl tag[2] # collect relays
+                for tag in event.tags:
+                  if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
+                    config.relays_known.incl tag[2] # collect relays
 
-              case event.kind:
-              of 2: # recommend relay
-                if event.content.startsWith('"'):
-                  config.relays_known.incl event.content
+                case event.kind:
+                of 2: # recommend relay
+                  if event.content.startsWith('"'):
+                    config.relays_known.incl event.content
 
-              of 6: # repost, NIP-18
-                if event.content.startsWith("{"): # is a stringified post
-                  header
-                  try: echo event.content.fromJson(events.Event).content
-                  except: discard # TODO: Fetch from tags if invalid JSON
-                else:
-                  var filter = Filter(limit: 1)
-                  var relays = initLPSetz[string, int8, 6]()
-                  for tag in event.tags:
-                    if tag.len >= 2 and tag[1].len > 0:
-                      case tag[0]:
-                      of "e":
-                        filter.ids.add tag[1]
-                        if tag.len >= 3 and tag[2].len > 0:
-                          relays.add tag[2]
-                      of "p":
-                        filter.authors.add tag[1]
-                        if tag.len >= 3 and tag[2].len > 0:
-                          relays.add tag[2]
-                  if filter != Filter(limit: 1):
-                    if relays.len > 0:
-                      request(CMRequest(id: randomID(), filter: filter).toJson, relays)
-                    else:
-                      request(CMRequest(id: randomID(), filter: filter).toJson, relay)
-                  else:
+                of 6: # repost, NIP-18
+                  if event.content.startsWith("{"): # is a stringified post
                     header
-                    echo event.content
+                    try: echo event.content.fromJson(events.Event).content
+                    except: discard # TODO: Fetch from tags if invalid JSON
+                  else:
+                    var filter = Filter(limit: 1)
+                    var relays = initLPSetz[string, int8, 6]()
+                    for tag in event.tags:
+                      if tag.len >= 2 and tag[1].len > 0:
+                        case tag[0]:
+                        of "e":
+                          filter.ids.add tag[1]
+                          if tag.len >= 3 and tag[2].len > 0:
+                            relays.add tag[2]
+                        of "p":
+                          filter.authors.add tag[1]
+                          if tag.len >= 3 and tag[2].len > 0:
+                            relays.add tag[2]
+                    if filter != Filter(limit: 1):
+                      if relays.len > 0:
+                        request(CMRequest(id: randomID(), filter: filter).toJson, relays)
+                      else:
+                        request(CMRequest(id: randomID(), filter: filter).toJson)
+                    else:
+                      header
+                      echo event.content
 
-              else:
-                header
-                echo event.content
+                else:
+                  header
+                  echo event.content
 
-          when msg is SMEose: break
-          else: echo ""
-      except: discard
-    # ws.send(CMClose(id: reqid).toJson)
+            when msg is SMEose: break
+            else: echo ""
+        except: discard
+      # ws.send(CMClose(id: reqid).toJson)
+    request(req)
     ws.close()
 
   if config.relays.len == 0:
@@ -251,7 +254,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   var relays = config.relays
   randomize()
   for id in ids:
-    request(format(id).toJson, relays)
+    request(parse(id).toJson, relays)
   config.save(configPath)
 
 ### Config management ###
