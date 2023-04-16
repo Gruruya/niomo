@@ -130,7 +130,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
     echo await ws.receiveStrPacket()
     ws.close()
 
-  var tasks = newSeq[Future[void]](config.relays.len)
+  var tasks = newSeqOfCap[Future[void]](config.relays.len)
   for relay in config.relays:
     tasks.add send(relay, post)
   waitFor all(tasks)
