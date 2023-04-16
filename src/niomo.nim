@@ -328,7 +328,7 @@ proc accountImport*(echo = false, private_keys: seq[string]): int =
     let kp = seckey.toKeypair
     echo config.addAcc(generateAlias(seckey.toPublicKey), kp, echo)
 
-proc accountEnable*(name: seq[string]): string =
+proc accountSet*(name: seq[string]): string =
   ## change what account to use by default, pass no arguments to be anonymous
   ##
   ## without an account set, a new key will be generated every time you post
@@ -350,7 +350,7 @@ proc accountEnable*(name: seq[string]): string =
 
   echo name, " doesn't exist, creating it"
   echo accountCreate(names = @[name])
-  accountEnable(@[name])
+  accountSet(@[name])
 
 proc accountRemove*(names: seq[string]): int =
   ## remove accounts
@@ -482,7 +482,7 @@ when isMainModule:
   dispatchMultiGen(
     ["accounts"],
     [accountCreate, cmdName = "create", help = {"echo": "generate and print accounts without saving", "overwrite": "overwrite existing accounts"}, dispatchName = "aCreate"],
-    [accountEnable, cmdName = "enable", dispatchName = "aEnable", usage = "$command $args\n${doc}"],
+    [accountSet, cmdName = "set", dispatchName = "aSet", usage = "$command $args\n${doc}"],
     [accountImport, cmdName = "import", dispatchName = "aImport"],
     [accountRemove, cmdName = "remove", dispatchName = "aRemove", usage = "$command $args\n${doc}"], # alias rm
     [accountList, cmdName = "list", dispatchName = "aList", usage = "$command $args\n${doc}"])
@@ -496,5 +496,5 @@ when isMainModule:
   dispatchMulti(["multi", cmdName = "niomo"],
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
     [post],
-    [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "enable", "import", "remove", "list"]],
+    [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "set", "import", "remove", "list"]],
     [relay, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
