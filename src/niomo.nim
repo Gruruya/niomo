@@ -172,7 +172,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo parse(id).toJson
     return
 
-  var postIDs = initLPSetz[string, int8, 6]
+  var foundIDs = initLPSetz[EventID, int8, 6]()
 
   proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.}
 
@@ -196,14 +196,20 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
             else:
               when msg is SMEvent:
                 template event: untyped = msg.event
+
                 let header  =
                   "@" & $event.pubkey & "\n" &
                   $event.id & "\n" &
                   $event.created_at & ":" & "\n"
 
-                for tag in event.tags:
+                template display(event: events.Event) =
+                  if event.id notin foundIDs:
+                    foundIDs.incl event.id
+                    echo header, event.content
+
+                for tag in event.tags: # collect relays
                   if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
-                    config.relays_known.incl tag[2] # collect relays
+                    config.relays_known.incl tag[2]
 
                 case event.kind:
                 of 2: # recommend relay
@@ -231,7 +237,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       else:
                         tasks.add request(CMRequest(id: randomID(), filter: filter).toJson)
                     else:
-                      echo header, event.content
+                      if event.id notin foundIDs:
+                        display event
 
                   if event.content.startsWith("{"): # is a stringified post
                     try:
@@ -243,7 +250,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                     echoRepost
 
                 else:
-                  echo header, event.content
+                  display event
 
             when msg is SMEose: break
             else: echo ""
