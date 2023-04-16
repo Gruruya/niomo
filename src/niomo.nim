@@ -438,6 +438,7 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
       echo relay, " is already disabled"
 
   var config = getConfig()
+  var indexRemove: seq[string]
   for relay in relays:
     if relay in config.relays_known:
       disable(relay)
@@ -445,9 +446,11 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
       try: # Disable by index
         let index = parseInt(relay)
         if index <= config.relays_known.len and index > 0:
-          disable(config.relays_known.nthKey(index - 1))
+          indexRemove.add config.relays_known.nthKey(index - 1)
       except ValueError: discard # Ignore request to disable non-existant relay
   config.save(configPath)
+  if indexRemove.len > 0:
+    return relayDisable(delete, indexRemove)
 
 proc relayRemove(relays: seq[string]): int =
   ## remove a relay
