@@ -1,7 +1,6 @@
 # niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
 
-Command-line client for Nostr.
-Experimental, incomplete, and featureless.
+Command-line client for Nostr. Experimental.
 
 Highlights:
 * Pass -e to echo formatted data rather than submitting.
@@ -17,7 +16,7 @@ niomo show
 ```
 
 See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
-For individual commands pass the `-h` flag `niomo post -h`
+For single-action commands pass the `-h` flag `niomo post -h`
 
 Commands can be shortened to any unique string, so `niomo a l` is the same as `niomo account list`
 
