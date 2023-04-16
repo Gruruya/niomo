@@ -211,11 +211,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                     config.relays_known.incl event.content
 
                 of 6: # repost, NIP-18
-                  if event.content.startsWith("{"): # is a stringified post
-                    header
-                    try: echo event.content.fromJson(events.Event).content
-                    except: discard # TODO: Fetch from tags if invalid JSON
-                  else:
+                  template echoRepost =
                     var filter = Filter(limit: 1)
                     var relays = initLPSetz[string, int8, 6]()
                     for tag in event.tags:
@@ -238,6 +234,13 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       header
                       echo event.content
 
+                  if event.content.startsWith("{"): # is a stringified post
+                    header
+                    try: echo event.content.fromJson(events.Event).content
+                    except: echoRepost
+                  else:
+                    echoRepost
+
                 else:
                   header
                   echo event.content
@@ -245,7 +248,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
             when msg is SMEose: break
             else: echo ""
         except: discard
-      # ws.send(CMClose(id: reqid).toJson)
     request(req)
     ws.close()
 
