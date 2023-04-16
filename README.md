@@ -1,4 +1,4 @@
-# niomo
+# niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
 
 Command-line client for Nostr.
 Experimental, incomplete, and featureless.
@@ -6,6 +6,8 @@ Experimental, incomplete, and featureless.
 Highlights:
 * Pass -e to echo formatted data rather than submitting.
 * Posting without an account will generate a random key for every post.
+
+_Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
 
 Install
 ---
