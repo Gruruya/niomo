@@ -335,7 +335,7 @@ proc accountSet*(name: seq[string]): string =
   var config = getConfig()
 
   if name.len == 0:
-    echo "Unsetting default account. A new random key will be generated for every post."
+    result = "Unsetting default account. A new random key will be generated for every post."
     config.account = ""
     config.save(configPath)
     return
