@@ -196,10 +196,10 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
             else:
               when msg is SMEvent:
                 template event: untyped = msg.event
-                template header =
-                  echo "@" & $event.pubkey
-                  echo $event.id
-                  echo $event.created_at & ":"
+                let header  =
+                  "@" & $event.pubkey & "\n" &
+                  $event.id & "\n" &
+                  $event.created_at & ":" & "\n"
 
                 for tag in event.tags:
                   if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
@@ -231,19 +231,17 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       else:
                         request(CMRequest(id: randomID(), filter: filter).toJson)
                     else:
-                      header
-                      echo event.content
+                      echo header, event.content
 
                   if event.content.startsWith("{"): # is a stringified post
-                    header
+                    echo header
                     try: echo event.content.fromJson(events.Event).content
                     except: echoRepost
                   else:
                     echoRepost
 
                 else:
-                  header
-                  echo event.content
+                  echo header, event.content
 
             when msg is SMEose: break
             else: echo ""
