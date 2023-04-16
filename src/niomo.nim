@@ -174,50 +174,57 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo format(id).toJson
     return
 
-  var relays = config.relays
-  if relays.len == 0:
-    usage "No relays configured, add relays with `niomo relay enable`"
-  randomize()
-  for id in ids:
+  template request[K,Z,z](req: string, relays: sink LPSetz[K, Z, z]) =
+    # Call `randomize()` first
     while relays.len > 0:
       let relay = relays.nthKey(rand(relays.len - 1))
       relays.del(relay)
-      let ws = newWebSocket(relay)
-      ws.send(format(id).toJson)
-      while true:
-        let optMsg = ws.receiveMessage(10000)
-        if optMsg.isNone or optMsg.unsafeGet.data == "": break
-        try:
-          let msgUnion = optMsg.unsafeGet.data.fromMessage
-          unpack msgUnion, msg:
-            if raw:
-              echo msg.toJson
-            else:
-              when msg is SMEvent:
-                template event: untyped = msg.event
-                echo "@" & $event.pubkey
-                echo $event.created_at & ":"
-                for tag in event.tags:
-                  if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p"):
-                    config.relays_known.incl tag[2] # collect relays
-                case event.kind:
-                of 2: # recommend relay
-                  if event.content.startsWith('"'):
-                    config.relays_known.incl event.content
-                of 6: # repost
-                  if event.content.startsWith("{"): # is a stringified post
-                    echo event.content.fromJson(events.Event).content
-                  else:
-                    echo event.content
-                  # TODO: else fetch from #e tag
+      request(req, relay)
+
+  proc request(req, relay: string) =
+    let ws = newWebSocket(relay)
+    ws.send(req)
+    while true:
+      let optMsg = ws.receiveMessage(10000)
+      if optMsg.isNone or optMsg.unsafeGet.data == "": break
+      try:
+        let msgUnion = optMsg.unsafeGet.data.fromMessage
+        unpack msgUnion, msg:
+          if raw:
+            echo msg.toJson
+          else:
+            when msg is SMEvent:
+              template event: untyped = msg.event
+              echo "@" & $event.pubkey
+              echo $event.created_at & ":"
+              for tag in event.tags:
+                if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
+                  config.relays_known.incl tag[2] # collect relays
+              case event.kind:
+              of 2: # recommend relay
+                if event.content.startsWith('"'):
+                  config.relays_known.incl event.content
+              of 6: # repost
+                if event.content.startsWith("{"): # is a stringified post
+                  echo event.content.fromJson(events.Event).content
                 else:
                   echo event.content
-            when msg is SMEose: break
-            else: echo ""
-        except: discard
-      # ws.send(CMClose(id: reqid).toJson)
-      ws.close()
-      config.save(configPath)
+                # TODO: else fetch from #e tag
+              else:
+                echo event.content
+          when msg is SMEose: break
+          else: echo ""
+      except: discard
+    # ws.send(CMClose(id: reqid).toJson)
+    ws.close()
+
+  if config.relays.len == 0:
+    usage "No relays configured, add relays with `niomo relay enable`"
+  var relays = config.relays
+  randomize()
+  for id in ids:
+    request(format(id).toJson, relays)
+  config.save(configPath)
 
 ### Config management ###
 
