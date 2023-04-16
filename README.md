@@ -9,14 +9,6 @@ Highlights:
 
 _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
 
-Install
----
-Install Nim 2.0, here are two options:
-* See `Installing Nim 2.0 RC2` at the Nim-lang blog [here](https://nim-lang.org/blog/2023/03/31/version-20-rc2.html)
-* Install [choosenim](https://github.com/dom96/choosenim#installation) and run `choosenim devel`
-
-Then, run `nimble install https://github.com/Gruruya/niomo`
-
 Usage
 ---
 ```bash
@@ -28,6 +20,15 @@ See `niomo help` to list the subcommands, you can do the same for any subcommand
 For individual commands pass the `-h` flag `niomo post -h`
 
 Commands can be shortened to any unique string, so `niomo a l` is the same as `niomo account list`
+
+Install
+---
+Install Nim 2.0, here are two options:
+* See `Installing Nim 2.0 RC2` at the Nim-lang blog [here](https://nim-lang.org/blog/2023/03/31/version-20-rc2.html)
+* Install [choosenim](https://github.com/dom96/choosenim#installation) and run `choosenim devel`
+
+Then, run `nimble install https://github.com/Gruruya/niomo`
+
 
 ---
 [![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
