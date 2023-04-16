@@ -48,7 +48,7 @@ type Config = object
   account = ""
   accounts: LPTabz[string, string, int8, 6]
   relays: LPSetz[string, int8, 6]
-  relays_known: LPSetz[string, int8, 6] # TODO: Collect relays from posts, NIP-65
+  relays_known: LPSetz[string, int8, 6] # TODO: NIP-65
 
 template save(config: Config, path: string) =
   var s = newFileStream(path, fmWrite)
@@ -63,7 +63,7 @@ template getConfig: Config =
     for relay in ["wss://relay.snort.social"]: # Default relays
       config.relays_known.incl relay
       config.relays.incl relay
-      config.save(configPath)
+    config.save(configPath)
   else:
     var s = newFileStream(configPath)
     load(s, config)
@@ -97,7 +97,7 @@ func parseSecretKey(key: string): SkSecretKey {.inline.} =
   raise newException(ValueError, "Unknown private key format. Supported: hex, bech32")
 
   doAssert false # Silence compiler, will never reach
-  return SkSecretKey.fromHex(key).tryGet #
+  return SkSecretKey.fromHex(key).tryGet
 
 template defaultKeypair: Keypair =
   if config.account == "": newKeypair()
@@ -195,23 +195,51 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
           else:
             when msg is SMEvent:
               template event: untyped = msg.event
-              echo "@" & $event.pubkey
-              echo $event.created_at & ":"
+              template header =
+                echo "@" & $event.pubkey
+                echo $event.created_at & ":"
+
               for tag in event.tags:
                 if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
                   config.relays_known.incl tag[2] # collect relays
+
               case event.kind:
               of 2: # recommend relay
                 if event.content.startsWith('"'):
                   config.relays_known.incl event.content
-              of 6: # repost
+
+              of 6: # repost, NIP-18
                 if event.content.startsWith("{"): # is a stringified post
-                  echo event.content.fromJson(events.Event).content
+                  header
+                  try: echo event.content.fromJson(events.Event).content
+                  except: discard # TODO: Fetch from tags if invalid JSON
                 else:
-                  echo event.content
-                # TODO: else fetch from #e tag
+                  var filter = Filter(limit: 1)
+                  var relays = initLPSetz[string, int8, 6]()
+                  for tag in event.tags:
+                    if tag.len >= 2 and tag[1].len > 0:
+                      case tag[0]:
+                      of "e":
+                        filter.ids.add tag[1]
+                        if tag.len >= 3 and tag[2].len > 0:
+                          relays.add tag[2]
+                      of "p":
+                        filter.authors.add tag[1]
+                        if tag.len >= 3 and tag[2].len > 0:
+                          relays.add tag[2]
+                  if filter != Filter(limit: 1):
+                    if relays.len > 0:
+                      request(CMRequest(id: randomID(), filter: filter).toJson, relays)
+                    else:
+                      request(CMRequest(id: randomID(), filter: filter).toJson, relay)
+                  else:
+                    header
+                    echo event.content
+
               else:
+                header
                 echo event.content
+
           when msg is SMEose: break
           else: echo ""
       except: discard
