@@ -70,9 +70,13 @@ template getConfig: Config =
     s.close()
   config
 
-template display(keypair: Keypair): string =
-  "Private key: " & $keypair.seckey & "\n" &
-  "Public key: " & $keypair.pubkey & "\n"
+template display(keypair: Keypair, bech32 = false): string =
+  if not bech32:
+    "Private key: " & $keypair.seckey & "\n" &
+    "Public key: " & $keypair.pubkey & "\n"
+  else:
+    "Private key: " & keypair.seckey.toBech32 & "\n" &
+    "Public key: " & keypair.pubkey.toBech32 & "\n"
 
 template keypair(config: Config, name: string): Keypair =
   if name in config.accounts:
@@ -304,7 +308,7 @@ proc accountRemove*(names: seq[string]): int =
           config.accounts.del(name)
     config.save(configPath)
 
-proc accountList*(prefixes: seq[string]): string =
+proc accountList*(bech32 = false, prefixes: seq[string]): string =
   ## list accounts (optionally) only showing those whose names start with any of the given `prefixes`
   let config = getConfig()
   if config.account != "":
@@ -314,7 +318,7 @@ proc accountList*(prefixes: seq[string]): string =
   for account, key in config.accounts.pairs:
     if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
       let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
-      result &= account & ":\n" & display(kp)
+      result &= account & ":\n" & display(kp, bech32)
 
   if result.len == 0:
     result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
