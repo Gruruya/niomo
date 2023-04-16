@@ -473,8 +473,7 @@ when isMainModule:
   include cligen/mergeCfgEnvMulMul
   const nimbleFile = staticRead(currentSourcePath().parentDir /../ "niomo.nimble")
   clCfg.version = nimbleFile.fromNimble("version")
-  proc argParse[T](dst: var Option[T], dfl: Option[T],
-                   a: var ArgcvtParams): bool =
+  proc argParse[T](dst: var Option[T], dfl: Option[T], a: var ArgcvtParams): bool =
       var uw: T # An unwrapped value
       if argParse(uw, (if dfl.isSome: dfl.get else: uw), a):
         dst = option(uw); return true
