@@ -228,7 +228,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo parse(id).toJson
     return
 
-  var foundIDs = initLPSetz[EventID, int8, 6]() # TODO: Change to sigs
+  var foundSigs = initLPSetz[SkSchnorrSignature, int8, 6]()
 
   proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.}
 
@@ -259,8 +259,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                   $event.created_at & ":" & "\n"
 
                 template display(event: events.Event) =
-                  if event.id notin foundIDs:
-                    foundIDs.incl event.id
+                  if event.sig notin foundSigs:
+                    foundSigs.incl event.sig
                     echo header, event.content, "\n"
 
                 for tag in event.tags: # collect relays
