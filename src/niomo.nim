@@ -191,6 +191,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   elif ids.len == 0:
     ids = @[""]
 
+  var kinds = kinds
+  if -1 in kinds:
+    kinds = @[]
+  elif kinds.len > 3:
+    kinds = kinds[3..^1]
+
   var config = getConfig()
 
   template parse(postid: string): untyped =
@@ -214,9 +220,6 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     except InvalidBech32Error, UnknownTLVError:
       if postid.len != 0:
         filter.ids.add postid
-
-    if -1 in filter.kinds:
-      filter.kinds = @[]
 
     CMRequest(id: randomID(), filter: filter)
 
