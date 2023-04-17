@@ -31,18 +31,11 @@ template usage(why: string): untyped =
 
 proc promptYN(default: bool): bool =
   while true:
-    case getch():
-    of 'y', 'Y':
+    case stdin.readLine().toLower():
+    of "y", "ye", "yes":
       return true
-    of 'n', 'N':
-      return false
-    of '\13': # RET
-      return default
-    of '\3', '\4': # C-c, C-d
-      return default
-      # raise newException(CatchableError, "User requested exit")
     else:
-      continue
+      break
 
 type Config = object
   account = ""
