@@ -134,8 +134,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   let keypair = getKeypair(account)
 
   var text = text
-
-  if not stdin.isatty:
+  if not stdin.isatty: # stdin handling
     if text.len == 0:
       let input = stdin.readAll()
       text = @[input]
@@ -166,9 +165,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   ## show a post
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
-  var ids = ids
 
-  if not stdin.isatty:
+  var ids = ids
+  if not stdin.isatty: # stdin handling
     if ids.len == 0:
       for line in stdin.lines:
         for word in line.split(' '):
