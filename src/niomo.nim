@@ -120,6 +120,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   let keypair = getKeypair(account)
 
   let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
+
   if echo:
     echo post
     return
@@ -246,7 +247,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                   if event.content.startsWith("{"): # is a stringified post
                     try:
                       let parsed = event.content.fromJson(events.Event).content
-                      echo header, parsed
+                      display event
                     except JsonError:
                       echoRepost
                   else:
@@ -267,7 +268,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     while relays.len > 0:
       let relay = relays.nthKey(rand(relays.len - 1))
       relays.del(relay)
-      tasks.add request(req, relay)
+      tasks.add request(req, relay) # TODO: Check if any more posts can be fetched
     await all(tasks)
 
   if config.relays.len == 0:
