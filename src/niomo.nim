@@ -105,20 +105,6 @@ template getKeypair(account: Option[string]): Keypair =
     except:
       config.keypair(unsafeGet account)
 
-template readstdin(arg: var seq[string]): bool =
-  if not stdin.isatty:
-    let input = stdin.readAll()
-
-    if arg.len == 0:
-      arg = @[input]
-
-    elif "-" in arg or "/dev/stdin" in arg:
-      for i, item in arg:
-        if item == "-": arg[i] = input
-        elif item == "/dev/stdin": arg[i] = input
-    true
-  else: false
-
 ###### CLI Commands ######
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
