@@ -144,7 +144,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
       for i in 0..<text.len:
         if text[i] in ["-", "/dev/stdin"]: text[i] = input
 
-  let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
+  let post = CMEvent(event: note(keypair, text.join(" "))).toJson # TODO: Recommend enabled relays
 
   if echo:
     echo post
