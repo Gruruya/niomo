@@ -112,6 +112,20 @@ template getKeypair(account: Option[string]): Keypair =
     except:
       config.keypair(unsafeGet account)
 
+template readstdin(arg: var seq[string]): bool =
+  if not stdin.isatty:
+    let input = stdin.readAll()
+
+    if arg.len == 0:
+      arg = @[input]
+
+    elif "-" in arg or "/dev/stdin" in arg:
+      for i, item in arg:
+        if item == "-": arg[i] = input
+        elif item == "/dev/stdin": arg[i] = input
+    true
+  else: false
+
 ###### CLI Commands ######
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
@@ -120,16 +134,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   let keypair = getKeypair(account)
 
   var text = text
-  if not stdin.isatty:
-    let input = stdin.readAll()
-
-    if text.len == 0:
-      text = @[input]
-
-    elif "-" in text or "/dev/stdin" in text:
-      for i, item in text:
-        if item == "-": text[i] = input
-        elif item == "/dev/stdin": text[i] = input
+  discard text.readstdin
 
   let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
 
@@ -153,7 +158,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
   var ids = ids
-  if ids.len == 0: ids = @[""] # Workaround cligen default opts
+  if not ids.readstdin and ids.len == 0:
+    ids = @[""]
   var config = getConfig()
 
   template parse(postid: string): untyped =
