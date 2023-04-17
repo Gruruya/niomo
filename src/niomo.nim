@@ -297,8 +297,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                       display event
                   if event.content.startsWith("{"): # is a stringified post
                     try:
-                      let parsed = event.content.fromJson(events.Event).content
-                      display event
+                      let parsed = event.content.fromJson(events.Event)
+                      display parsed
                     except JsonError:
                       echoRepost
                   else:
