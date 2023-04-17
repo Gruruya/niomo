@@ -134,7 +134,16 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   let keypair = getKeypair(account)
 
   var text = text
-  discard text.readstdin
+
+  if not stdin.isatty:
+    if text.len == 0:
+      let input = stdin.readAll()
+      text = @[input]
+
+    elif "-" in text or "/dev/stdin" in text:
+      let input = stdin.readAll()
+      for i in 0..<text.len:
+        if text[i] in ["-", "/dev/stdin"]: text[i] = input
 
   let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
 
@@ -158,8 +167,30 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
   var ids = ids
-  if not ids.readstdin and ids.len == 0:
+
+  if not stdin.isatty:
+    if ids.len == 0:
+      for line in stdin.lines:
+        for word in line.split(' '):
+          ids.add word
+
+    elif "-" in ids or "/dev/stdin" in ids:
+      var words: seq[string]
+      for line in stdin.lines:
+        for word in line.split(' '):
+          words.add word
+
+      var newIDs: seq[string]
+      for i in 0..<ids.len:
+        if ids[i] in ["-", "/dev/stdin"]:
+          newIDs.add(words)
+        else:
+          newIDs.add ids[i]
+      ids = newIDs
+
+  elif ids.len == 0:
     ids = @[""]
+
   var config = getConfig()
 
   template parse(postid: string): untyped =
@@ -182,7 +213,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
     except InvalidBech32Error, UnknownTLVError:
       if postid.len != 0:
-        filter.ids = @[postid]
+        filter.ids.add postid
 
     if -1 in filter.kinds:
       filter.kinds = @[]
