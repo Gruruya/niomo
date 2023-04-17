@@ -161,9 +161,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       var newIDs: seq[string]
       for i in 0..<ids.len:
         if ids[i] in ["-", "/dev/stdin"]:
-          newIDs.add(words)
-        else:
-          newIDs.add ids[i]
+              newIDs.add(words)
+        else: newIDs.add ids[i]
       ids = newIDs
 
   elif ids.len == 0:
