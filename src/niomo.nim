@@ -253,7 +253,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                 template event: untyped = msg.event
 
                 let header  =
-                  "@" & $event.pubkey & "\n" &
+                  event.pubkey.toBech32 & "\n" &
                   $event.id & "\n" &
                   $event.created_at & ":" & "\n"
 
