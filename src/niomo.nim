@@ -18,7 +18,7 @@
 ## Command line client for Nostr.
 
 import
-  std/[os, strutils, sequtils, sugar, options, streams, random, asyncdispatch],
+  std/[os, strutils, sequtils, sugar, options, streams, random, asyncdispatch, terminal],
   pkg/[nmostr, yaml, adix/lptabz, cligen, ws],
   ./niomo/alias, ./niomo/lptabz_yaml
 
@@ -119,6 +119,18 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
   var config = getConfig()
   let keypair = getKeypair(account)
 
+  var text = text
+  if not stdin.isatty:
+    let input = stdin.readAll()
+
+    if text.len == 0:
+      text = @[input]
+
+    elif "-" in text or "/dev/stdin" in text:
+      for i, item in text:
+        if item == "-": text[i] = input
+        elif item == "/dev/stdin": text[i] = input
+
   let post = CMEvent(event: note(text.join(" "), keypair)).toJson # TODO: Recommend enabled relays
 
   if echo:
@@ -176,7 +188,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       echo parse(id).toJson
     return
 
-  var foundIDs = initLPSetz[EventID, int8, 6]()
+  var foundIDs = initLPSetz[EventID, int8, 6]() # TODO: Change to sigs
 
   proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.}
 
@@ -253,7 +265,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                   else:
                     echoRepost
                 else:
-                  display event
+                  display event # TODO: Replace duplicate displays with breaks
 
             when msg is SMEose: break
         except: discard
