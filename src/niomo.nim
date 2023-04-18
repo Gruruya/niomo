@@ -246,7 +246,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
                 case event.kind:
                 of 2: # recommend relay
-                  if event.content.startsWith('"ws'):
+                  if event.content.startsWith("\"ws"):
                     config.relays_known.incl event.content
 
                 of 6: # repost, NIP-18
