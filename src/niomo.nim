@@ -241,12 +241,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                     echo header, event.content, "\n"
 
                 for tag in event.tags: # collect relays
-                  if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].len > 0:
+                  if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].startsWith("ws"):
                     config.relays_known.incl tag[2]
 
                 case event.kind:
                 of 2: # recommend relay
-                  if event.content.startsWith('"'):
+                  if event.content.startsWith('"ws'):
                     config.relays_known.incl event.content
 
                 of 6: # repost, NIP-18
