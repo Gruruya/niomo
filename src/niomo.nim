@@ -22,8 +22,6 @@ import
   pkg/[nmostr, yaml, adix/lptabz, cligen, ws],
   ./niomo/alias, ./niomo/lptabz_yaml
 
-from std/terminal import getch
-
 ###### Types and helper utils ######
 
 template usage(why: string): untyped =
