@@ -167,9 +167,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     ids = @[""]
 
   var kinds = kinds
-  if -1 in kinds:
+  if -1 in kinds: # no kinds filtering if user put -1
     kinds = @[]
-  elif kinds.len > 3:
+  elif kinds.len > 3: # remove defaults kinds if there are user specified
     kinds = kinds[3..^1]
 
   var config = getConfig()
