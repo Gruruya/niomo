@@ -54,8 +54,8 @@ template getConfig: Config =
   if not fileExists(configPath):
     createDir(parentDir configPath)
     for relay in ["wss://relay.snort.social"]: # Default relays
-      config.relays_known.incl relay
-      config.relays.incl relay
+      config.relays_known.add relay
+      config.relays.add relay
     config.save(configPath)
   else:
     var s = newFileStream(configPath)
@@ -237,7 +237,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
                 template display(event: events.Event) =
                   if event.sig notin foundSigs:
-                    foundSigs.incl event.sig
+                    foundSigs.add event.sig
                     echo header, event.content, "\n"
 
                 for tag in event.tags: # collect relays
@@ -422,7 +422,7 @@ proc relayAdd*(enable = true, relays: seq[string]): int =
         echo "Enabling ", relay
       else:
         echo "Adding and enabling ", relay
-      config.relays.incl relay
+      config.relays.add relay
     else: echo "Adding ", relay
     config.relays_known.incl relay
   config.save(configPath)
@@ -439,7 +439,7 @@ proc relayEnable*(relays: seq[string]): int =
           echo relay & " is already enabled"
         else:
           echo "Enabling ", relay
-          config.relays.incl relay
+          config.relays.add relay
       else:
         echo $index & " is out of bounds, there are only " & $config.relays_known.len & " known relays."
 
@@ -448,7 +448,7 @@ proc relayEnable*(relays: seq[string]): int =
         echo "Enabling ", relay
       else:
         echo "Adding and enabling ", relay
-        config.relays_known.incl relay
+        config.relays_known.add relay
       config.relays.incl relay
   config.save(configPath)
 
