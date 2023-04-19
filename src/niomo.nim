@@ -207,7 +207,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   var foundSigs = initLPSetz[SkSchnorrSignature, int8, 6]()
 
-  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.}
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.} # Early declare for mutual recursion
 
   proc request(req, relay: string) {.async.} =
     let ws = await newWebSocket(relay)
