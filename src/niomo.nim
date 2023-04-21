@@ -249,6 +249,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
                 of 6: # repost, NIP-18
                   template echoRepost =
+                    if event.content.len > 0:
+                      display event
+
                     var filter = Filter(limit: 1)
                     var relays = initLPSetz[string, int8, 6]()
                     for tag in event.tags:
@@ -263,15 +266,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                           if tag.len >= 3 and tag[2].len > 0:
                             relays.add tag[2]
                     if filter != Filter(limit: 1):
-                      if event.content.len > 0:
-                        display event
                       if relays.len > 0:
                         tasks.add request(CMRequest(id: randomID(), filter: filter).toJson, relays)
                       else:
                         tasks.add request(CMRequest(id: randomID(), filter: filter).toJson)
-                    else:
-                      display event
-                  if event.content.startsWith("{"): # is a stringified post
+
+                  if event.content.startsWith("{"): # contains a stringified post
                     try:
                       let parsed = event.content.fromJson(events.Event)
                       display parsed
