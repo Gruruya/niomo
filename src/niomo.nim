@@ -228,12 +228,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
               when msg is SMEvent:
                 template event: untyped = msg.event
 
-                let header  =
-                  event.pubkey.toBech32 & "\n" &
-                  $event.id & "\n" &
-                  $event.created_at & ":" & "\n"
-
                 template display(event: events.Event) =
+                  let header  =
+                    event.pubkey.toBech32 & "\n" &
+                    $event.id & "\n" &
+                    event.created_at.format("h:mm:ss MM/dd/YYYY") & ":" & "\n"
+
                   if event.sig notin foundSigs:
                     foundSigs.add event.sig
                     echo header, event.content, "\n"
