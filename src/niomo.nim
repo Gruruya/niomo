@@ -292,6 +292,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     # Call `randomize()` first
     var relays = relays
     var tasks = newSeqOfCap[Future[void]](relays.len)
+    # TODO: Fetch recommended relays
     while relays.len > 0:
       let relay = relays.nthKey(rand(relays.len - 1))
       relays.del(relay)
