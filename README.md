@@ -11,8 +11,14 @@ _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}
 Usage
 ---
 ```bash
-niomo post -a first-account Hello world!
+# Create an account "first account" and post Hello world!
+niomo post -a 'first account' Hello world!
+# Show the global feed of your enabled relays
 niomo show
+# Echo 30 new keypairs
+niomo account create 30 -e
+# Add and enable a new relay
+niomo relay enable wss://relay.mostr.pub
 ```
 
 See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
