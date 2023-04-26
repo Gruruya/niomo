@@ -318,20 +318,20 @@ template randomAccount: (string, Keypair) =
     name = generateAlias(kp.seckey.toPublicKey)
   (name, kp)
 
-template addAcc(config: Config, name: string, kp: Keypair, echo: bool): string =
+template addAcc(config: Config, name: string, kp: Keypair, echo: bool, bech32 = false): string =
   if not echo:
     config.accounts[name] = $kp.seckey
     config.save(configPath)
-  name & ":\n" & display(kp)
+  name & ":\n" & display(kp, bech32)
 
-proc accountCreate*(echo = false, overwrite = false, names: seq[string]): string =
+proc accountCreate*(echo = false, overwrite = false, bech32 = false, names: seq[string]): string =
   ## generate new accounts
   var config = getConfig()
 
   if names.len == 0:
     # Generate a new account with a random name based on its public key
     var (name, kp) = randomAccount()
-    return config.addAcc(name, kp, echo)
+    return config.addAcc(name, kp, echo, bech32)
   else:
     if names.len == 1:
       # Check if `name` is a number, if so, create that many accounts
@@ -339,12 +339,12 @@ proc accountCreate*(echo = false, overwrite = false, names: seq[string]): string
         let num = parseInt(names[0])
         for _ in 1..num:
           var (name, kp) = randomAccount()
-          result &= config.addAcc(name, kp, echo)
+          result &= config.addAcc(name, kp, echo, bech32)
         return
       except ValueError: discard
     for name in names:
       if overwrite or name notin config.accounts:
-        result &= config.addAcc(name, newKeypair(), echo)
+        result &= config.addAcc(name, newKeypair(), echo, bech32)
       else:
         result &= name & " already exists, refusing to overwrite\n"
 
