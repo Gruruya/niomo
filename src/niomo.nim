@@ -412,11 +412,11 @@ proc accountList*(bech32 = false, prefixes: seq[string]): string =
   if result.len == 0:
     result = "No accounts found. Use `account create` to make one.\nYou could also use niomo without an account and it will generate different random key for every post."
 
-proc relayAdd*(enable = true, relays: seq[string]): int =
+proc relayAdd*(activate = true, relays: seq[string]): int =
   ## add relays to known relays
   var config = getConfig()
   for relay in relays:
-    if enable:
+    if activate:
       if relay in config.relays_known:
         echo "Enabling ", relay
       else:
