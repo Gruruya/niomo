@@ -19,6 +19,8 @@ niomo show
 niomo account create 30 -e
 # Add and enable a new relay
 niomo relay add wss://relay.mostr.pub
+# Unset default account, generating a new keypair for every post (anonymous mode)
+niomo a s # Same as niomo account set
 ```
 
 See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
