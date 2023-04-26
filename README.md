@@ -11,7 +11,7 @@ _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}
 Usage
 ---
 ```bash
-# Create an account "first account" and post Hello world!
+# Use (and create) the account "first account" and post Hello world!
 niomo post -a 'first account' Hello world!
 # Show the global feed of your enabled relays
 niomo show
