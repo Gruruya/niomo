@@ -18,7 +18,7 @@ niomo show
 # Echo 30 new keypairs
 niomo account create 30 -e
 # Add and enable a new relay
-niomo relay enable wss://relay.mostr.pub
+niomo relay add wss://relay.mostr.pub
 ```
 
 See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
