@@ -18,7 +18,7 @@ niomo show
 niomo relay add wss://relay.mostr.pub
 # Echo 30 new keypairs
 niomo account create 30 -e
-# Unset default account, generating a new keypair for every post (anonymous mode)
+# Unset default account, generating a new keypair for every post
 niomo a s # Same as niomo account set
 ```
 
