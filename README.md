@@ -4,7 +4,7 @@ Command-line client for Nostr. Experimental.
 
 Highlights:
 * Pass -e to echo formatted data rather than submitting.
-* Supports piping via stdin/stdout
+* Supports piping via stdin.
 
 _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
 
