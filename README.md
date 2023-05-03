@@ -1,12 +1,6 @@
 # niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
 
 Command-line client for Nostr. Experimental.  
-
-* Make a post with `post` and show a post with `show`
-* Pipe in via stdin
-* Pipe prepared request out with `niomo post --echo`
-* Show raw response with `niomo show --raw`
-
 _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
 
 Usage
