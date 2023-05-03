@@ -1,10 +1,11 @@
 # niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
 
-Command-line client for Nostr. Experimental.
+Command-line client for Nostr. Experimental.  
 
-Highlights:
-* Pass -e to echo formatted data rather than submitting.
-* Supports piping via stdin.
+* Make a post with `post` and show a post with `show`
+* Pipe in via stdin
+* Pipe prepared request out with the --echo flag
+* Show raw response with `niomo show --raw`
 
 _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
 
@@ -23,8 +24,16 @@ niomo account create 30 -e
 niomo a s # Same as niomo account set
 ```
 
-See `niomo help` to list the subcommands, you can do the same for any subcommand containing subsubcommands by doing `niomo account help`, using `account` as an example.  
-For single-action commands pass the `-h` flag `niomo post -h`
+```bash
+Usage:
+  niomo {SUBCMD}  [sub-command options & parameters]
+where {SUBCMD} is one of:
+  help      print comprehensive or per-cmd help
+  show      show a post
+  post      make a post
+  accounts  manage your identities/keypairs. run `accounts help` for subsubcommands
+  relay     manage what relays to send posts to. run `relay help` for subsubcommands
+```
 
 Commands can be shortened to any unique string, so `niomo a l` is the same as `niomo account list`
 
