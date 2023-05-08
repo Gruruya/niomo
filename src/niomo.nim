@@ -300,7 +300,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     await all(tasks)
 
   if config.relays.len == 0:
-    usage "No relays configured, add relays with `niomo relay enable`"
+    usage "No relays configured, add relays with `niomo relays add`"
   randomize()
   var tasks = newSeqOfCap[Future[void]](ids.len * config.relays.len)
   for id in ids:
@@ -480,7 +480,7 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
       except ValueError: discard # Ignore request to disable non-existant relay
   config.save(configPath)
   if indexRemove.len > 0:
-    return relayDisable(delete, indexRemove)
+    result = relayDisable(delete, indexRemove)
 
 proc relayRemove(relays: seq[string]): int =
   ## remove a relay
@@ -517,7 +517,7 @@ when isMainModule:
     [accountRemove, cmdName = "remove", dispatchName = "aRemove", usage = "$command $args\n${doc}"], # alias rm
     [accountList, cmdName = "list", dispatchName = "aList", usage = "$command $args\n${doc}"])
   dispatchMultiGen(
-    ["relay"],
+    ["relays"],
     [relayAdd, cmdName = "add", dispatchName = "rAdd"],
     [relayEnable, cmdName = "enable", dispatchName = "rEnable", usage = "$command $args\n${doc}"],
     [relayDisable, cmdName = "disable", dispatchName = "rDisable"],
@@ -527,4 +527,4 @@ when isMainModule:
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
     [post],
     [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "set", "import", "remove", "list"]],
-    [relay, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
+    [relays, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])

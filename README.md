@@ -11,7 +11,7 @@ niomo post -a 'first account' Hello world!
 # Show the global feed of your enabled relays
 niomo show
 # Add and enable a new relay
-niomo relay add wss://relay.mostr.pub
+niomo relays add wss://relay.mostr.pub
 # Echo 30 new keypairs
 niomo account create 30 -e
 # Unset default account, generating a new keypair for every post
