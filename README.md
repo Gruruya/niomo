@@ -26,10 +26,10 @@ where {SUBCMD} is one of:
   show      show a post
   post      make a post
   accounts  manage your identities/keypairs. run `accounts help` for subsubcommands
-  relay     manage what relays to send posts to. run `relay help` for subsubcommands
+  relays    manage what relays to send posts to. run `relays help` for subsubcommands
 ```
 
-Commands can be shortened to any unique string, so `niomo a l` is the same as `niomo account list`
+Commands can be shortened to any unique string, so `niomo a l` is the same as `niomo accounts list`
 
 Install
 ---
