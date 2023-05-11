@@ -178,25 +178,17 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
     if filter != "":
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
-      var filter = Filter(limit: limit, kinds: kinds)
-      try:
-        # TODO: Get relays as well
-        let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
-        unpack bech32, entity:
-          when entity is NNote:
-            filter.ids = @[entity.id.toHex]
-          elif entity is NProfile:
-            filter.authors = @[entity.pubkey.toHex]
-          elif entity is NEvent:
-            filter.ids = @[entity.id.toHex]
-          elif entity is NAddr:
-            filter.authors = @[entity.author.toHex]
-            filter.tags = @[@["#d", entity.id]]
-          elif entity is SkXOnlyPublicKey:
-            filter.authors = @[entity.toHex]
-      except InvalidBech32Error, UnknownTLVError:
-        if postid.len != 0:
-          filter.ids.add postid
+      # TODO: Get relays as well
+      var filter =
+        try:
+          let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
+          bech32.toFilter()
+        except InvalidBech32Error, UnknownTLVError:
+          if postid.len != 0:
+                Filter(ids: @[postid]) # Assume postid to be an event ID
+          else: Filter()
+      filter.limit = limit
+      filter.kinds.add kinds
 
       CMRequest(id: randomID(), filter: filter)
 
