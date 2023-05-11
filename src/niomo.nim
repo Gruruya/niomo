@@ -138,7 +138,7 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
     tasks.add send(relay, post)
   waitFor all(tasks)
 
-proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
+proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
@@ -174,33 +174,35 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   var config = getConfig()
 
-  template parse(postid: string): untyped =
-    var filter = Filter(limit: limit, kinds: kinds)
-    try:
-      # TODO: Get relays as well
-      let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
-      unpack bech32, entity:
-        when entity is NNote:
-          filter.ids = @[entity.id.toHex]
-        elif entity is NProfile:
-          filter.authors = @[entity.pubkey.toHex]
-        elif entity is NEvent:
-          filter.ids = @[entity.id.toHex]
-        elif entity is NAddr:
-          filter.authors = @[entity.author.toHex]
-          filter.tags = @[@["#d", entity.id]]
-        elif entity is SkXOnlyPublicKey:
-          filter.authors = @[entity.toHex]
+  proc getFilter(postid: string): CMRequest =
+    if filter != "":
+      CMRequest(id: randomID(), filter: filter.fromJson(Filter))
+    else:
+      var filter = Filter(limit: limit, kinds: kinds)
+      try:
+        # TODO: Get relays as well
+        let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
+        unpack bech32, entity:
+          when entity is NNote:
+            filter.ids = @[entity.id.toHex]
+          elif entity is NProfile:
+            filter.authors = @[entity.pubkey.toHex]
+          elif entity is NEvent:
+            filter.ids = @[entity.id.toHex]
+          elif entity is NAddr:
+            filter.authors = @[entity.author.toHex]
+            filter.tags = @[@["#d", entity.id]]
+          elif entity is SkXOnlyPublicKey:
+            filter.authors = @[entity.toHex]
+      except InvalidBech32Error, UnknownTLVError:
+        if postid.len != 0:
+          filter.ids.add postid
 
-    except InvalidBech32Error, UnknownTLVError:
-      if postid.len != 0:
-        filter.ids.add postid
-
-    CMRequest(id: randomID(), filter: filter)
+      CMRequest(id: randomID(), filter: filter)
 
   if echo:
     for id in ids:
-      echo parse(id).toJson
+      echo getFilter(id).toJson
     return
 
   var foundSigs = initLPSetz[SkSchnorrSignature, int8, 6]()
@@ -304,7 +306,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   randomize()
   var tasks = newSeqOfCap[Future[void]](ids.len * config.relays.len)
   for id in ids:
-    tasks.add request(parse(id).toJson, config.relays)
+    tasks.add request(getFilter(id).toJson, config.relays)
   waitFor all(tasks)
   config.save(configPath)
 
