@@ -71,7 +71,7 @@ template display(keypair: Keypair, bech32 = false): string =
 
 template keypair(config: Config, name: string): Keypair =
   if name in config.accounts:
-    toKeypair(SkSecretKey.fromHex(config.accounts[name]).get)
+    toKeypair(SecretKey.fromHex(config.accounts[name]).get)
   else:
     echo name, " isn't an existing account. Creating it."
     let created = newKeypair()
@@ -80,15 +80,15 @@ template keypair(config: Config, name: string): Keypair =
     config.save(configPath)
     created
 
-func parseSecretKey(key: string): SkSecretKey {.inline.} =
+func parseSecretKey(key: string): SecretKey {.inline.} =
   if key.len == 64:
-    return SkSecretKey.fromHex(key).tryGet
+    return SecretKey.fromHex(key).tryGet
   elif key.len == 63 and key.startsWith("nsec1"):
-    return SkSecretKey.fromRaw(decode("nsec1", key)).tryGet
+    return SecretKey.fromRaw(decode("nsec1", key)).tryGet
   raise newException(ValueError, "Unknown private key format. Supported: hex, bech32")
 
   doAssert false # Silence compiler, will never reach
-  return SkSecretKey.fromHex(key).tryGet
+  return SecretKey.fromHex(key).tryGet
 
 template defaultKeypair: Keypair =
   if config.account == "": newKeypair()
@@ -197,7 +197,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       echo getFilter(id).toJson
     return
 
-  var foundSigs = initLPSetz[SkSchnorrSignature, int8, 6]()
+  var foundSigs = initLPSetz[SchnorrSignature, int8, 6]()
 
   proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.} # Early declare for mutual recursion
 
@@ -400,7 +400,7 @@ proc accountList*(bech32 = false, prefixes: seq[string]): string =
 
   for account, key in config.accounts.pairs:
     if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
-      let kp = SkSecretKey.fromHex(key).tryGet.toKeypair
+      let kp = SecretKey.fromHex(key).tryGet.toKeypair
       result &= account & ":\n" & display(kp, bech32)
 
   if result.len == 0:
