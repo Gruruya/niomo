@@ -22,7 +22,7 @@ import
   pkg/[nmostr, yaml, adix/lptabz, cligen, ws],
   ./niomo/alias, ./niomo/lptabz_yaml
 
-###### Types and helper utils ######
+# Types and helper utils ##########################################
 
 template usage(why: string): untyped =
   raise newException(HelpError, why & " ${HELP}")
@@ -103,7 +103,7 @@ template getKeypair(account: Option[string]): Keypair =
     except CatchableError:
       config.keypair(unsafeGet account)
 
-###### CLI Commands ######
+# CLI Commands ##########################################
 
 proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
   ## make a post
@@ -490,7 +490,7 @@ proc relayList*(prefixes: seq[string]): string =
       echo $(i + 1), (if relay in config.relays: " * " else: " "), relay
   # could put enabled relays first
 
-###### CLI ######
+# CLI ##########################################
 when isMainModule:
   import pkg/[cligen/argcvt]
   # taken from c-blake "https://github.com/c-blake/cligen/issues/212#issuecomment-1167777874"
