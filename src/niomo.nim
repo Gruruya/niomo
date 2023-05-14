@@ -271,7 +271,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
                   else:
                     echoRepost
                 else:
-                  display event # TODO: Replace duplicate displays with breaks
+                  display event
 
             when msg is SMEose: break
         except: discard
