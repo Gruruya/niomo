@@ -91,14 +91,14 @@ func parseSecretKey(key: string): SecretKey {.inline.} =
   return SecretKey.fromHex(key).tryGet
 
 template defaultKeypair: Keypair =
-  if config.account == "": newKeypair()
+  if config.account.len == 0: newKeypair()
   else: config.keypair(config.account)
 
 template getKeypair(account: Option[string]): Keypair =
   if account.isNone: defaultKeypair()
-  elif account == some "": newKeypair()
+  elif unsafeGet(account).len == 0: newKeypair()
   else:
-    try: # Parse as private key
+    try: # Treat as private key
       parseSecretKey(unsafeGet account).toKeypair
     except CatchableError:
       config.keypair(unsafeGet account)
@@ -175,7 +175,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   var config = getConfig()
 
   proc getFilter(postid: string): CMRequest =
-    if filter != "":
+    if filter.len != 0:
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
       # TODO: Get relays as well
@@ -210,7 +210,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       await ws.send(req)
       while true:
         let optMsg = await ws.receiveStrPacket()
-        if optMsg == "": break
+        if optMsg.len == 0: break
         try:
           let msgUnion = optMsg.fromMessage
           unpack msgUnion, msg:
@@ -387,14 +387,14 @@ proc accountRemove*(names: seq[string]): int =
         echo "About to remove record of " & name & "'s private key, are you sure? [y/N]"
         if promptYN(false):
           echo "Removing account: " & name & "\n" & display(config.keypair(name))
-          if config.account == name: config.account = ""
+          if config.account == name: config.account = "" # Unset if it's default account
           config.accounts.del(name)
     config.save(configPath)
 
 proc accountList*(bech32 = false, prefixes: seq[string]): string =
   ## list accounts (optionally) only showing those whose names start with any of the given `prefixes`
   let config = getConfig()
-  if config.account != "":
+  if config.account.len > 0:
         echo "Default account: " & config.account
   else: echo "No default account set, a random key will be generated every time you post"
 
