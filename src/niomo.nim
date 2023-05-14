@@ -493,16 +493,19 @@ proc relayList*(prefixes: seq[string]): string =
 #[___ CLI _________________________________________]#
 when isMainModule:
   import pkg/[cligen/argcvt]
-  # taken from c-blake "https://github.com/c-blake/cligen/issues/212#issuecomment-1167777874"
   include cligen/mergeCfgEnvMulMul
   const nimbleFile = staticRead(currentSourcePath().parentDir /../ "niomo.nimble")
   clCfg.version = nimbleFile.fromNimble("version")
+
+  # Option[T] helpdoc
+  # taken from c-blake "https://github.com/c-blake/cligen/issues/212#issuecomment-1167777874"
   proc argParse[T](dst: var Option[T], dfl: Option[T], a: var ArgcvtParams): bool =
       var uw: T # An unwrapped value
       if argParse(uw, (if dfl.isSome: dfl.get else: uw), a):
         dst = option(uw); return true
   proc argHelp*[T](dfl: Option[T]; a: var ArgcvtParams): seq[string] =
     result = @[ a.argKeys, $T, (if dfl.isSome: $dfl.get else: "?")]
+
   dispatchMultiGen(
     ["accounts"],
     [accountCreate, cmdName = "create", help = {"echo": "generate and print accounts without saving", "overwrite": "overwrite existing accounts"}, dispatchName = "aCreate"],
