@@ -97,7 +97,7 @@ template getKeypair(account: Option[string]): Keypair =
   else:
     try: # Treat as private key
       parseSecretKey(unsafeGet account).toKeypair
-    except CatchableError:
+    except:
       config.keypair(unsafeGet account)
 
 #[___ CLI Commands _________________________________________]#
@@ -274,7 +274,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
                   display event # TODO: Replace duplicate displays with breaks
 
             when msg is SMEose: break
-        except CatchableError: discard
+        except: discard
         await all(tasks)
     await request(req)
     ws.close()
