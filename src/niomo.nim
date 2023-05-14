@@ -304,7 +304,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
 template randomAccount: (string, Keypair) =
   var kp = newKeypair()
   var name = generateAlias(kp.pubkey)
-  while name in config.accounts:
+  while unlikely name in config.accounts:
     kp = newKeypair()
     name = generateAlias(kp.seckey.toPublicKey)
   (name, kp)
