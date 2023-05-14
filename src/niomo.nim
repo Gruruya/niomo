@@ -82,13 +82,10 @@ template keypair(config: Config, name: string): Keypair =
 
 func parseSecretKey(key: string): SecretKey {.inline.} =
   if key.len == 64:
-    return SecretKey.fromHex(key).tryGet
+    return SecretKey.fromHex(key).get
   elif key.len == 63 and key.startsWith("nsec1"):
-    return SecretKey.fromRaw(decode("nsec1", key)).tryGet
+    return SecretKey.fromRaw(decode("nsec1", key)).get
   raise newException(ValueError, "Unknown private key format. Supported: hex, bech32")
-
-  doAssert false # Silence compiler, will never reach
-  return SecretKey.fromHex(key).tryGet
 
 template defaultKeypair: Keypair =
   if config.account.len == 0: newKeypair()
@@ -399,7 +396,7 @@ proc accountList*(bech32 = false, prefixes: seq[string]): string =
 
   for account, key in config.accounts.pairs:
     if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
-      let kp = SecretKey.fromHex(key).tryGet.toKeypair
+      let kp = SecretKey.fromHex(key).get.toKeypair
       result &= account & ":\n" & display(kp, bech32)
 
   if result.len == 0:
