@@ -349,8 +349,7 @@ proc accountImport*(echo = false, private_keys: seq[string]): int =
     usage "No private keys given, nothing to import. ${HELP}"
   for key in privateKeys:
     let seckey = parseSecretKey(key)
-    let kp = seckey.toKeypair
-    echo config.addAcc(generateAlias(seckey.toPublicKey), kp, echo)
+    echo config.addAcc(generateAlias(seckey.toPublicKey), seckey, echo)
 
 proc accountSet*(name: seq[string]): string =
   ## change what account to use by default, pass no arguments to be anonymous
