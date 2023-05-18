@@ -40,6 +40,6 @@ Install Nim 2.0, here are two options:
 Then, run `nimble install https://github.com/Gruruya/niomo`
 
 ---
-[![GitHub CI](../../actions/workflows/build.yml/badge.svg?branch=master)](../../actions/workflows/build.yml)
-[![Minimum supported Nim version](https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400)](https://nim-lang.org)
-[![License](https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366)](LICENSE.md)
+<pre>
+<a href="../../actions/workflows/build.yml"><img src="../../actions/workflows/build.yml/badge.svg?branch=master" /></a> <a href="https://nim-lang.org"><img src="https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400"/></a> <a href="LICENSE.md"><img src="https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366"/></a>
+</pre>
