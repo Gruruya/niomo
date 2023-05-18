@@ -176,13 +176,13 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
       # TODO: Get relays as well
-      var filter =
-        try:
-          let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
+      var filter = block:
+        let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
+        when bech32 is NostrTLV:
           bech32.toFilter()
-        except InvalidBech32Error, UnknownTLVError:
+        else:
           if postid.len != 0:
-                Filter(ids: @[postid]) # Assume postid to be an event ID
+            Filter(ids: @[postid]) # Assume postid to be an event ID
           else: Filter()
       filter.limit = limit
       filter.kinds.add kinds
