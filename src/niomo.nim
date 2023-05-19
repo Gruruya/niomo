@@ -102,7 +102,7 @@ template getKeypair(account: Option[string]): Keypair =
 
 #[___ CLI Commands _________________________________________]#
 
-proc post*(echo = false, account: Option[string] = none string, text: seq[string]): int =
+proc post*(echo = false, account: Option[string] = none string, raw = false, text: seq[string]): int =
   ## make a post
   var config = getConfig()
   let keypair = getKeypair(account)
@@ -118,7 +118,9 @@ proc post*(echo = false, account: Option[string] = none string, text: seq[string
       for i in 0..<text.len:
         if text[i] in ["-", "/dev/stdin"]: text[i] = input
 
-  let post = CMEvent(event: note(keypair, text.join(" "))).toJson # TODO: Recommend enabled relays
+  let post =
+    if not raw: CMEvent(event: note(keypair, text.join(" "))).toJson # TODO: Recommend enabled relays
+    else: text.join(" ")
 
   if echo:
     echo post
@@ -517,7 +519,7 @@ when isMainModule:
     [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
   dispatchMulti(["multi", cmdName = "niomo"],
-    [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display all of the response rather than filtering to just the content"}, positional = "ids"],
-    [post],
+    [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display raw JSON of the response"}, short = {"raw": 'R'}, positional = "ids"],
+    [post, help = {"raw": "treat input as raw JSON rather than the content of a note"}, short = {"raw": 'R'}],
     [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "set", "import", "remove", "list"]],
     [relays, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
