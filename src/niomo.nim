@@ -174,18 +174,25 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   var config = getConfig()
 
   proc getFilter(postid: string): CMRequest =
+    template inputFilter(): Filter =
+      if postid.len != 0:
+        Filter(ids: @[postid]) # Assume postid to be an event ID
+      else:
+        Filter()
+
     if filter.len != 0:
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
       # TODO: Get relays as well
       var filter = block:
-        let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
-        when bech32 is NostrTLV:
-          bech32.toFilter()
-        else:
-          if postid.len != 0:
-            Filter(ids: @[postid]) # Assume postid to be an event ID
-          else: Filter()
+        try:
+          let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
+          when bech32 is NostrTLV:
+            bech32.toFilter()
+          else:
+            inputFilter()
+        except:
+          inputFilter()
       filter.limit = limit
       filter.kinds.add kinds
 
