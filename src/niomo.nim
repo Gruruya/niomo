@@ -41,7 +41,7 @@ type Config = object
   relays: LPSetz[string, int8, 6]
   relays_known: LPSetz[string, int8, 6] # TODO: NIP-65
 
-template save(config: Config, path: string) =
+proc save(config: Config, path: string) {.inline.} =
   var s = newFileStream(path, fmWrite)
   dump(config, s)
   s.close()
@@ -61,7 +61,7 @@ template getConfig: Config =
     s.close()
   config
 
-template display(keypair: Keypair, bech32 = false): string =
+proc display(keypair: Keypair, bech32 = false): string {.inline.} =
   if not bech32:
     "Private key: " & $keypair.seckey & "\n" &
     "Public key: " & $keypair.pubkey & "\n"
