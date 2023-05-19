@@ -186,11 +186,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       # TODO: Get relays as well
       var filter = block:
         try:
-          let bech32 = fromNostrBech32(postid) # Check if it's an encoded bech32 string
-          when bech32 is NostrTLV:
-            bech32.toFilter()
-          else:
-            inputToFilter()
+          fromNostrBech32(postid).toFilter # Check if it's an encoded bech32 string
         except:
           inputToFilter()
       filter.limit = limit
