@@ -174,7 +174,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   var config = getConfig()
 
   proc getFilter(postid: string): CMRequest =
-    template inputFilter(): Filter =
+    template inputToFilter(): Filter =
       if postid.len != 0:
         Filter(ids: @[postid]) # Assume postid to be an event ID
       else:
@@ -190,9 +190,9 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
           when bech32 is NostrTLV:
             bech32.toFilter()
           else:
-            inputFilter()
+            inputToFilter()
         except:
-          inputFilter()
+          inputToFilter()
       filter.limit = limit
       filter.kinds.add kinds
 
