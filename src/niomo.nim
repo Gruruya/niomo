@@ -174,12 +174,6 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   var config = getConfig()
 
   proc getFilter(postid: string): CMRequest =
-    template inputToFilter(): Filter =
-      if postid.len != 0:
-        Filter(ids: @[postid]) # Assume postid to be an event ID
-      else:
-        Filter()
-
     if filter.len != 0:
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
@@ -188,7 +182,10 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
         try:
           fromNostrBech32(postid).toFilter # Check if it's an encoded bech32 string
         except:
-          inputToFilter()
+          if postid.len != 0:
+            Filter(ids: @[postid]) # Assume postid to be an event ID
+          else:
+            Filter()
       filter.limit = limit
       filter.kinds.add kinds
 
