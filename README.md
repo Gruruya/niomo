@@ -33,9 +33,7 @@ Commands can be shortened to any unique string, so `niomo a l` is the same as `n
 
 Install
 ---
-Install Nim 2.0, here are two options:
-* See `Installing Nim 2.0 RC2` at the Nim-lang blog [here](https://nim-lang.org/blog/2023/03/31/version-20-rc2.html)
-* Install [choosenim](https://github.com/dom96/choosenim#installation) and run `choosenim devel`
+Install Nim 2.0, one way of doing so is with [choosenim](https://github.com/dom96/choosenim#installation) by running `choosenim devel`
 
 Then, run `nimble install https://github.com/Gruruya/niomo`
 
