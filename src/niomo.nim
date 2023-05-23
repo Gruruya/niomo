@@ -144,7 +144,7 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
     for relay in config.relays:
       m.spawn send(relay, post)
 
-proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
+proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
@@ -182,29 +182,26 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       ## Assume input to be an event ID
       Filter(ids: @[postid])
 
-    if filter.len != 0:
-      CMRequest(id: randomID(), filter: filter.fromJson(Filter))
-    else:
-      # TODO: Get relays as well
-      var filter = block:
-        try:
-          fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
-        except:
-          if postid.len != 0:
-            try: # Try to parse as raw filter JSON
-              if postid[0] == '{' and postid[^1] == '}' and likely postid.startsWith("{\""):
-                postid.fromJson(Filter)
-              else: inputToFilter()
-            except: inputToFilter()
-          else: default(Filter)
+    # TODO: Get relays as well
+    var filter = block:
+      try:
+        fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
+      except:
+        if postid.len != 0:
+          try: # Try to parse as raw filter JSON
+            if postid[0] == '{' and postid[^1] == '}' and likely postid.startsWith("{\""):
+              postid.fromJson(Filter)
+            else: inputToFilter()
+          except: inputToFilter()
+        else: default(Filter)
+    if limit != 10:
       filter.limit = limit
-      if kinds.len >= 1:
-        if filter.kinds == @[1, 6, 30023]: # Kinds were described in the filter, remove defaults kinds
-          filter.kinds = kinds
-        else:
-          filter.kinds.add kinds
+    if kinds != @[1, 6, 30023]:
+      filter.kinds.add kinds
+    elif filter.kinds.len == 0:
+      filter.kinds = kinds
 
-      CMRequest(id: randomID(), filter: filter)
+    CMRequest(id: randomID(), filter: filter)
 
   if echo:
     for id in ids:
