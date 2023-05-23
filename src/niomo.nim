@@ -18,8 +18,8 @@
 ## Command line client for Nostr.
 
 import
-  std/[os, strutils, sequtils, sugar, options, streams, random, asyncdispatch, terminal],
-  pkg/[nmostr, yaml, adix/lptabz, cligen, ws],
+  os, strutils, sequtils, sugar, options, streams, random, terminal, locks,
+  pkg/[nmostr, yaml, adix/lptabz, cligen, malebolgia, whisky],
   ./niomo/alias, ./niomo/lptabz_yaml
 
 #[___ Types and helper utils _________________________________________]#
@@ -102,6 +102,7 @@ template getKeypair(account: Option[string]): Keypair =
 
 #[___ CLI Commands _________________________________________]#
 
+
 proc post*(echo = false, account: Option[string] = none string, raw = false, text: seq[string]): int =
   ## make a post
   var config = getConfig()
@@ -126,22 +127,27 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
     echo post
     return
 
-  proc send(relay, post: string) {.async.} =
-    let ws = await newWebSocket(relay)
-    await ws.send(post)
-    echo await ws.receiveStrPacket()
+  proc send(relay, post: string) {.nimcall.} =
+    let ws = whisky.newWebSocket(relay)
+    ws.send(post)
+    # Read back response
+    let r = ws.receiveMessage()
+    if r.isSome:
+      let response = r.unsafeGet
+      if likely response.kind == TextMessage:
+            echo response.data
+      else: echo response
     ws.close()
 
-  var tasks = newSeqOfCap[Future[void]](config.relays.len)
-  for relay in config.relays:
-    tasks.add send(relay, post)
-  waitFor all(tasks)
+  var m = createMaster()
+  m.awaitAll:
+    for relay in config.relays:
+      m.spawn send(relay, post)
 
 proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
-
   var ids = ids
   if not stdin.isatty: # stdin handling
     if ids.len == 0:
@@ -171,8 +177,6 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   elif kinds.len > 3: # remove defaults kinds if there are user specified
     kinds = kinds[3..^1]
 
-  var config = getConfig()
-
   proc getFilter(postid: string): CMRequest =
     if filter.len != 0:
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
@@ -196,22 +200,36 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       echo getFilter(id).toJson
     return
 
-  var foundSigs = initLPSetz[SchnorrSignature, int8, 6]()
+  #[___ Global variables for use in threads ___]#
+  template withLock(a: Lock, body: untyped) =
+    acquire(a)
+    {.gcsafe.}:
+      try:
+        body
+      finally:
+        release(a)
 
-  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.} # Early declare for mutual recursion
+  var config {.global.} = getConfig()
+  var foundSigs {.global.} = initLPSetz[SchnorrSignature, int8, 6]()
 
-  proc request(req, relay: string) {.async.} =
-    let ws = await newWebSocket(relay)
+  var configLock {.global.}: Lock
+  var foundSigsLock {.global.}: Lock
 
-    proc request(req: string) {.async.} =
-      var tasks: seq[Future[void]]
+  #[___ Threaded request implementation ___]#
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw: bool) {.gcsafe.} # Early declare for mutual recursion
 
-      await ws.send(req)
+  proc request(req, relay: string, raw: bool) {.nimcall, gcsafe.} =
+    let ws = whisky.newWebSocket(relay)
+    var m = createMaster()
+    m.awaitAll:
+      ws.send(req)
       while true:
-        let optMsg = await ws.receiveStrPacket()
-        if optMsg.len == 0: break
+        let r = ws.receiveMessage()
+        if r.isNone: break
+        let response = r.unsafeGet
+        if response.kind != TextMessage or response.data.len == 0: break
         try:
-          let msgUnion = optMsg.fromMessage
+          let msgUnion = response.data.fromMessage
           unpack msgUnion, msg:
 
             if raw:
@@ -227,18 +245,21 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
                     $event.id & "\n" &
                     event.created_at.format("h:mm:ss MM/dd/YYYY") & ":" & "\n"
 
-                  if event.sig notin foundSigs:
-                    foundSigs.add event.sig
-                    echo header, event.content, "\n"
-
+                  withLock foundSigsLock:
+                    if event.sig notin foundSigs:
+                      echo header, event.content, "\n"
+                      foundSigs.add event.sig
+ 
                 for tag in event.tags: # collect relays
                   if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].startsWith("ws"):
-                    config.relays_known.incl tag[2]
+                    withLock configLock:
+                      config.relays_known.incl tag[2]
 
                 case event.kind:
                 of 2: # recommend relay
                   if event.content.startsWith("\"ws"):
-                    config.relays_known.incl event.content
+                    withLock configLock:
+                      config.relays_known.incl event.content
 
                 of 6: # repost, NIP-18
                   template echoRepost =
@@ -252,17 +273,17 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
                         case tag[0]:
                         of "e":
                           filter.ids.add tag[1]
-                          if tag.len >= 3 and tag[2].len > 0:
+                          if tag.high >= 2 and tag[2].len > 0:
                             relays.add tag[2]
                         of "p":
                           filter.authors.add tag[1]
-                          if tag.len >= 3 and tag[2].len > 0:
+                          if tag.high >= 2 and tag[2].len > 0:
                             relays.add tag[2]
                     if filter != Filter(limit: 1):
                       if relays.len > 0:
-                        tasks.add request(CMRequest(id: randomID(), filter: filter).toJson, relays)
+                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relays, raw)
                       else:
-                        tasks.add request(CMRequest(id: randomID(), filter: filter).toJson)
+                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relay, raw)
 
                   if event.content.startsWith("{"): # contains a stringified post
                     try:
@@ -277,28 +298,28 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
 
             when msg is SMEose: break
         except: discard
-        await all(tasks)
-    await request(req)
     ws.close()
 
-  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z]) {.async.} =
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw: bool) {.gcsafe.} =
     # Call `randomize()` first
     var relays = relays
-    var tasks = newSeqOfCap[Future[void]](relays.len)
+    var m = createMaster()
     # TODO: Fetch recommended relays
-    while relays.len > 0:
-      let relay = relays.nthKey(rand(relays.len - 1))
-      relays.del(relay)
-      tasks.add request(req, relay) # TODO: Check if any more posts can be fetched
-    await all(tasks)
+    m.awaitAll:
+      while relays.len > 0:
+        let relay = relays.nthKey(rand(relays.len - 1))
+        relays.del(relay)
+        m.spawn request(req, relay, raw) # TODO: Check if any more posts can be fetched
 
   if config.relays.len == 0:
     usage "No relays configured, add relays with `niomo relays add`"
   randomize()
-  var tasks = newSeqOfCap[Future[void]](ids.len * config.relays.len)
-  for id in ids:
-    tasks.add request(getFilter(id).toJson, config.relays)
-  waitFor all(tasks)
+  initLock(configLock)
+  initLock(foundSigsLock)
+  var m = createMaster()
+  m.awaitAll:
+    for id in ids:
+      m.spawn request(getFilter(id).toJson, config.relays, raw)
   config.save(configPath)
 
 #[___ Config management _________________________________________]#
