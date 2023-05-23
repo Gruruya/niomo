@@ -24,17 +24,6 @@ import
 
 #[___ Types and helper utils _________________________________________]#
 
-template usage(why: string): untyped =
-  raise newException(HelpError, why & " ${HELP}")
-
-proc promptYN(default: bool): bool =
-  while true:
-    case stdin.readLine().toLower():
-    of "y", "ye", "yes":
-      return true
-    else:
-      break
-
 type Config = object
   account = ""
   accounts: LPTabz[string, string, int8, 6]
@@ -99,6 +88,17 @@ template getKeypair(account: Option[string]): Keypair =
       parseSecretKey(unsafeGet account).toKeypair
     except:
       config.keypair(unsafeGet account)
+
+template usage(why: string): untyped =
+  raise newException(HelpError, why & " ${HELP}")
+
+proc promptYN(default: bool): bool =
+  while true:
+    case stdin.readLine().toLower():
+    of "y", "ye", "yes":
+      return true
+    else:
+      break
 
 #[___ CLI Commands _________________________________________]#
 
