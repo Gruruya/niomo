@@ -146,6 +146,8 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
 
 proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
   ## show a post
+  ##
+  ## input (ids) can be an event ID, filter JSON, or NIP-19 bech32 address
   # TODO: Reversing output
   # TODO: Following and "niomo show" without arguments showing a feed
   var ids = ids
