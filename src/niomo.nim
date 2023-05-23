@@ -161,7 +161,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
       for line in stdin.lines:
         for word in line.split(' '):
           words.add word
-      var newIDs = newSeqOfCap[string](ids.len)
+      var newIDs: seq[string]
       for i in 0..ids.high:
         if ids[i] in ["-", "/dev/stdin"]:
               newIDs.add(words)
