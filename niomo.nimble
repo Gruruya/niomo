@@ -1,4 +1,4 @@
-version     = "0.0.8"
+version     = "0.0.8.1"
 author      = "Gruruya"
 description = "Nostr reference command line client using nmostr."
 license     = "AGPL-3.0-only"

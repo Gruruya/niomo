@@ -242,7 +242,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
                 template display(event: events.Event) =
                   let header  =
                     event.pubkey.toBech32 & "\n" &
-                    $event.id & "\n" &
+                    NNote(id: event.id).toBech32 & "\n" &
                     event.created_at.format("h:mm:ss MM/dd/YYYY") & ":" & "\n"
 
                   withLock foundSigsLock:
