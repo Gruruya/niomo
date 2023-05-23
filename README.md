@@ -41,5 +41,5 @@ Then, run `nimble install https://github.com/Gruruya/niomo`
 
 ---
 <pre>
-<a href="../../actions/workflows/build.yml"><img src="../../actions/workflows/build.yml/badge.svg?branch=master" /></a> <a href="https://nim-lang.org"><img src="https://img.shields.io/badge/Nim-1.9.1+-informational?logo=Nim&labelColor=232733&color=F3D400"/></a> <a href="LICENSE.md"><img src="https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366"/></a>
+<a href="../../actions/workflows/build.yml"><img src="../../actions/workflows/build.yml/badge.svg?branch=master" /></a> <a href="https://nim-lang.org"><img src="https://img.shields.io/badge/Nim-1.9.3+-informational?logo=Nim&labelColor=232733&color=F3D400"/></a> <a href="LICENSE.md"><img src="https://img.shields.io/github/license/Gruruya/niomo?logo=GNU&logoColor=000000&labelColor=FFFFFF&color=663366"/></a>
 </pre>
