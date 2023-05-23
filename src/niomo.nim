@@ -172,7 +172,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
     ids = @[""]
 
   var kinds = kinds
-  if -1 in kinds: # no kinds filtering if user put -1
+  if -1 in kinds: # no kind filtering if user put -1
     kinds = @[]
   elif kinds.len > 3: # remove defaults kinds if any were user specified
     kinds = kinds[3..^1]
