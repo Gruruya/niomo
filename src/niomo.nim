@@ -194,7 +194,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
             else: inputToFilter()
           except: inputToFilter()
         else: default(Filter)
-    if limit != 10:
+    if filter.limit == default(Filter).limit:
+      filter.limit = limit
+    elif limit != 10:
       filter.limit = limit
     if kinds != @[1, 6, 30023]:
       filter.kinds.add kinds
