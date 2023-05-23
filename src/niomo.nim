@@ -178,20 +178,31 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
     kinds = kinds[3..^1]
 
   proc getFilter(postid: string): CMRequest =
+    template inputToFilter: Filter =
+      ## Assume input to be an event ID
+      Filter(ids: @[postid])
+
     if filter.len != 0:
       CMRequest(id: randomID(), filter: filter.fromJson(Filter))
     else:
       # TODO: Get relays as well
       var filter = block:
         try:
-          fromNostrBech32(postid).toFilter # Check if it's an encoded bech32 string
+          fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
         except:
           if postid.len != 0:
-            Filter(ids: @[postid]) # Assume postid to be an event ID
-          else:
-            Filter()
+            try: # Try to parse as raw filter JSON
+              if postid[0] == '{' and postid[^1] == '}' and likely postid.startsWith("{\""):
+                postid.fromJson(Filter)
+              else: inputToFilter()
+            except: inputToFilter()
+          else: default(Filter)
       filter.limit = limit
-      filter.kinds.add kinds
+      if kinds.len >= 1:
+        if filter.kinds == @[1, 6, 30023]: # Kinds were described in the filter, remove defaults kinds
+          filter.kinds = kinds
+        else:
+          filter.kinds.add kinds
 
       CMRequest(id: randomID(), filter: filter)
 
@@ -304,7 +315,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
     # Call `randomize()` first
     var relays = relays
     var m = createMaster()
-    # TODO: Fetch recommended relays
+    # TODO: Fetch via recommended relays
     m.awaitAll:
       while relays.len > 0:
         let relay = relays.nthKey(rand(relays.len - 1))
