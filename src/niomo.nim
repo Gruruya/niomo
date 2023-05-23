@@ -155,13 +155,13 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
         for word in line.split(' '):
           ids.add word
 
+    # replace each occurence of - with stdin
     elif "-" in ids or "/dev/stdin" in ids:
       var words: seq[string]
       for line in stdin.lines:
         for word in line.split(' '):
           words.add word
-
-      var newIDs: seq[string]
+      var newIDs = newSeqOfCap(ids.len)
       for i in 0..ids.high:
         if ids[i] in ["-", "/dev/stdin"]:
               newIDs.add(words)
