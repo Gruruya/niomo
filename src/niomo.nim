@@ -116,7 +116,7 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
 
     elif "-" in text or "/dev/stdin" in text:
       let input = stdin.readAll()
-      for i in 0..<text.len:
+      for i in 0..text.high:
         if text[i] in ["-", "/dev/stdin"]: text[i] = input
 
   let post =
@@ -162,7 +162,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
           words.add word
 
       var newIDs: seq[string]
-      for i in 0..<ids.len:
+      for i in 0..ids.high:
         if ids[i] in ["-", "/dev/stdin"]:
               newIDs.add(words)
         else: newIDs.add ids[i]
@@ -174,7 +174,7 @@ proc show*(echo = false, raw = false, filter = "", kinds: seq[int] = @[1, 6, 300
   var kinds = kinds
   if -1 in kinds: # no kinds filtering if user put -1
     kinds = @[]
-  elif kinds.len > 3: # remove defaults kinds if there are user specified
+  elif kinds.len > 3: # remove defaults kinds if any were user specified
     kinds = kinds[3..^1]
 
   proc getFilter(postid: string): CMRequest =
