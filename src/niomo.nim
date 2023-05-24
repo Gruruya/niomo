@@ -183,7 +183,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   proc getFilter(postid: string): CMRequest =
     template inputToFilter: Filter =
       ## Assume input to be an event ID
-      Filter(ids: @[postid])
+      Filter(ids: @[postid], limit: limit, kinds: kinds)
 
     # TODO: Get relays as well
     var filter = block:
@@ -196,15 +196,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
               postid.fromJson(Filter)
             else: inputToFilter()
           except: inputToFilter()
-        else: default(Filter)
-    if filter.limit == default(Filter).limit:
-      filter.limit = limit
-    elif limit != 10:
+        else: Filter(limit: limit, kinds: kinds)
+    if limit != 10:
       filter.limit = limit
     if kinds != @[1, 6, 30023]:
       filter.kinds.add kinds
-    elif filter.kinds.len == 0:
-      filter.kinds = kinds
 
     CMRequest(id: randomID(), filter: filter)
 
