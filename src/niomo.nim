@@ -134,6 +134,7 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
     let r = ws.receiveMessage()
     if r.isSome:
       let response = r.unsafeGet
+      stdout.write relay & ": "
       if likely response.kind == TextMessage:
             echo response.data
       else: echo response
