@@ -1,4 +1,4 @@
-# niomo --- Command line client for Nostr.
+# niomo --- Command-line client for Nostr.
 # Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
 #
 # This file is part of niomo.

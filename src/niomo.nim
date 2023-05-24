@@ -1,4 +1,4 @@
-# niomo --- Command line client for Nostr.
+# niomo --- Command-line client for Nostr.
 # Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
 #
 # This file is part of niomo.
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with niomo.  If not, see <http://www.gnu.org/licenses/>.
 
-## Command line client for Nostr.
+## Command-line client for Nostr.
 
 import
   os, strutils, sequtils, sugar, options, streams, random, terminal, locks,
