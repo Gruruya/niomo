@@ -19,7 +19,7 @@
 
 import pkg/yaml/[serialization, presenter, taglib, private/internal], pkg/[adix/lptabz]
 
-{.push inline.}
+{.used.}
 
 # Taken from `NimYAML/yaml/serialization.nim`, `Table` and `set` replaced with `LPTabz` and `LPSetz`
 proc constructionError(s: YamlStream, mark: Mark, msg: string): ref YamlConstructionError =
