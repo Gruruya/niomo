@@ -191,23 +191,19 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   proc getFilter(postid: string): CMRequest =
     template inputToFilter: Filter =
       ## Assume input to be an event ID
-      Filter(ids: @[postid], kinds: kinds)
+      if postid.len == 0:
+            Filter(kinds: kinds, limit: limit)
+      else: Filter(ids: @[postid], kinds: kinds, limit: limit)
 
     # TODO: Get relays as well
     var filter = block:
-      try:
-        fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
+      try: fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
       except:
-        if postid.len != 0:
-          try: # Try to parse as raw filter JSON
-            if postid[0] == '{' and postid[^1] == '}' and likely postid.startsWith("{\""):
-              postid.fromJson(Filter)
-            else: inputToFilter()
-          except: inputToFilter()
-        else: Filter(limit: limit, kinds: kinds)
-    if limit != 10:
-      filter.limit = limit
-    elif filter.limit == default(Filter).limit:
+        if postid.len != 0 and postid[0] == '{' and postid[^1] == '}' and likely postid[1] == '"':
+          try: postid.fromJson(Filter)
+          except: return CMRequest(id: randomID(), filter: inputToFilter())
+        else: return CMRequest(id: randomID(), filter: inputToFilter())
+    if limit != 10 or filter.limit == 0:
       filter.limit = limit
     if kinds != @[1, 6, 30023]:
       for kind in kinds:
