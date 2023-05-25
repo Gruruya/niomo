@@ -69,7 +69,7 @@ proc next(self: Lsfr): uint64 {.raises: [].} =
   self.data = bitor(self.data shl 1, bit)
   result = self.data
 
-func truncPubkey(pubkey: SkPublicKey | SkXOnlyPublicKey): uint64 =
+func truncPubkey(pubkey: SkPublicKey): uint64 =
   let rawKey = pubkey.toRaw
   fromBytesBE(uint64, rawKey[25..32])
 
