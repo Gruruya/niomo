@@ -52,11 +52,11 @@ proc getConfig: Config =
 
 proc display(keypair: Keypair, bech32 = false): string {.inline.} =
   if not bech32:
-    "Private key: " & $keypair.seckey & "\n" &
-    "Public key: " & $keypair.pubkey & "\n"
+    "Public key: " & $keypair.pubkey & "\n" &
+    "Private key: " & $keypair.seckey & "\n"
   else:
-    "Private key: " & keypair.seckey.toBech32 & "\n" &
-    "Public key: " & keypair.pubkey.toBech32 & "\n"
+    "Public key: " & keypair.pubkey.toBech32 & "\n" &
+    "Private key: " & keypair.seckey.toBech32 & "\n"
 
 template keypair(config: Config, name: string): Keypair =
   if name in config.accounts:
