@@ -209,7 +209,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       filter.limit = limit
     elif filter.limit == default(Filter).limit:
       filter.limit = limit
-    if kinds != @[1, 6, 30023]:
+    if kinds != @[1, 6, 30023] and filter.kinds != kinds:
       filter.kinds.add kinds
 
     CMRequest(id: randomID(), filter: filter)
