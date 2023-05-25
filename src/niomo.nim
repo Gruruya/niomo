@@ -381,7 +381,7 @@ proc accountCreate*(echo = false, overwrite = false, bech32 = false, names: seq[
       else:
         result &= name & " already exists, refusing to overwrite\n"
 
-proc accountImport*(echo = false, private_keys: seq[string]): int =
+proc accountImport*(echo = false, privateKeys: seq[string]): int =
   ## import private keys as accounts
   var config = getConfig()
   if privateKeys.len == 0:
