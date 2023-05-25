@@ -19,13 +19,13 @@
 
 import pkg/yaml/[serialization, presenter, taglib, private/internal], pkg/[adix/lptabz]
 
-{.used.}
+{.used, push raises: [].}
 
 # Taken from `NimYAML/yaml/serialization.nim`, `Table` and `set` replaced with `LPTabz` and `LPSetz`
 proc constructionError(s: YamlStream, mark: Mark, msg: string): ref YamlConstructionError =
   return newYamlConstructionError(s, mark, msg)
 
-proc safeTagUri(tag: Tag): string {.raises: [].} =
+proc safeTagUri(tag: Tag): string =
   try:
     var uri = $tag
     # '!' is not allowed inside a tag handle
@@ -37,7 +37,7 @@ proc safeTagUri(tag: Tag): string {.raises: [].} =
   except KeyError:
     internalError("Unexpected KeyError for Tag " & $tag)
 
-proc yamlTag*[K,V:not void,Z,z](T: typedesc[LPTabz[K, V, Z, z]]): Tag {.raises: [].} =
+proc yamlTag*[K,V:not void,Z,z](T: typedesc[LPTabz[K, V, Z, z]]): Tag =
   return nimTag("tables:Table(" & safeTagUri(yamlTag(K)) & ';' & safeTagUri(yamlTag(V)) & ")")
 
 proc constructObject*[K,V:not void,Z,z](s: var YamlStream, c: ConstructionContext,
@@ -70,11 +70,10 @@ proc representObject*[K,V:not void,Z,z](value: LPTabz[K, V, Z, z], ts: TagStyle,
     discard
   c.put(endMapEvent())
 
-proc yamlTag*[K,Z,z](T: typedesc[LPSetz[K, Z, z]]): Tag {.raises: [].} =
+proc yamlTag*[K,Z,z](T: typedesc[LPSetz[K, Z, z]]): Tag =
   return nimTag("system:set(" & safeTagUri(yamlTag(K)) & ')')
 
-proc constructObject*[K,Z,z](s: var YamlStream, c: ConstructionContext, result: var LPSetz[K,Z,z])
-    {.raises: [YamlConstructionError, YamlStreamError].} =
+proc constructObject*[K,Z,z](s: var YamlStream, c: ConstructionContext, result: var LPSetz[K,Z,z]) {.raises: [YamlConstructionError, YamlStreamError].} =
   let event = s.next()
   if event.kind != yamlStartSeq:
     raise s.constructionError(event.startPos, "Expected sequence start")
