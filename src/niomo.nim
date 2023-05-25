@@ -122,14 +122,14 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, eve
   let post =
     if raw: text.join(" ")
     else:
-      var event =
+      var note =
         if not event: note(keypair, text.join(" ")) # TODO: Recommend enabled relays
         else: text.join(" ").fromJson(nmostr.Event)
 
       if pow > 0:
-        pow(event, pow)
+        note.pow(pow)
 
-      CMEvent(event: event).toJson
+      CMEvent(event: note).toJson
 
   if echo:
     echo post
