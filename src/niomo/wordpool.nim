@@ -43,7 +43,6 @@
 ## Taken from `nim-status/status/private/alias/data.nim`
 
 type Adjectives = array[0..1388, string]
-
 type Animals = array[0..1703, string]
 
 const adjectives*: Adjectives = [

@@ -49,13 +49,6 @@ import
 
 # For details: https://en.wikipedia.org/wiki/Linear-feedback_shift_register
 type
-  AliasError* = enum
-    FormatAliasError        = "alias: error formatting alias given " &
-                                "adjectives and animal"
-    ValidatePublicKeyError  = "alias: error validating public key"
-
-  AliasResult*[T] = Result[T, AliasError]
-
   Lsfr = ref object
     poly*: uint64
     data*: uint64
