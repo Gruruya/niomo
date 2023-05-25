@@ -29,23 +29,23 @@ type Config = object
   accounts: LPTabz[string, string, int8, 6]
   relays: LPSetz[string, int8, 6]
   relays_known: LPSetz[string, int8, 6] # TODO: NIP-65
+  path {.transient.}: string
 
-proc save(config: Config, path: string) {.inline.} =
-  var s = newFileStream(path, fmWrite)
+proc save(config: Config) {.inline.} =
+  var s = newFileStream(config.path, fmWrite)
   dump(config, s)
   s.close()
 
-template getConfig: Config =
-  let configPath {.inject.} = os.getConfigDir() / "niomo/config.yaml"
-  var config = Config()
-  if not fileExists(configPath):
-    createDir(parentDir configPath)
+proc getConfig: Config =
+  var config = Config(path: os.getConfigDir() / "niomo/config.yaml")
+  if not fileExists(config.path):
+    createDir(parentDir config.path)
     for relay in ["wss://relay.snort.social"]: # Default relays
       config.relays_known.add relay
       config.relays.add relay
-    config.save(configPath)
+    config.save()
   else:
-    var s = newFileStream(configPath)
+    var s = newFileStream(config.path)
     load(s, config)
     s.close()
   config
@@ -66,7 +66,7 @@ template keypair(config: Config, name: string): Keypair =
     let created = newKeypair()
     echo display(created)
     config.accounts[name] = $created.seckey
-    config.save(configPath)
+    config.save()
     created
 
 func parseSecretKey(key: string): SecretKey {.inline.} =
@@ -337,7 +337,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   m.awaitAll:
     for id in ids:
       m.spawn request(getFilter(id).toJson, config.relays, raw)
-  config.save(configPath)
+  config.save()
 
 #[___ Config management _________________________________________]#
 
@@ -352,7 +352,7 @@ template randomAccount: (string, Keypair) =
 template addAcc(config: Config, name: string, kp: Keypair, echo: bool, bech32 = false): string =
   if not echo:
     config.accounts[name] = $kp.seckey
-    config.save(configPath)
+    config.save()
   name & ":\n" & display(kp, bech32)
 
 proc accountCreate*(echo = false, overwrite = false, bech32 = false, names: seq[string]): string =
@@ -397,7 +397,7 @@ proc accountSet*(name: seq[string]): string =
   if name.len == 0:
     result = "Unsetting default account. A new random key will be generated for every post."
     config.account = ""
-    config.save(configPath)
+    config.save()
     return
 
   let name = name.join(" ")
@@ -405,7 +405,7 @@ proc accountSet*(name: seq[string]): string =
   if name in config.accounts.keys.toSeq:
     result = "Setting default account to \"" & name & '"'
     config.account = name
-    config.save(configPath)
+    config.save()
     return
 
   echo name, " doesn't exist, creating it"
@@ -425,7 +425,7 @@ proc accountRemove*(names: seq[string]): int =
           echo "Removing account: " & name & "\n" & display(config.keypair(name))
           if config.account == name: config.account = "" # Unset if it's default account
           config.accounts.del(name)
-    config.save(configPath)
+    config.save()
 
 proc accountList*(bech32 = false, prefixes: seq[string]): string =
   ## list accounts (optionally) only showing those whose names start with any of the given `prefixes`
@@ -454,7 +454,7 @@ proc relayAdd*(activate = true, relays: seq[string]): int =
       config.relays.add relay
     else: echo "Adding ", relay
     config.relays_known.incl relay
-  config.save(configPath)
+  config.save()
 
 proc relayEnable*(relays: seq[string]): int =
   ## enable relays to broadcast your posts with
@@ -479,7 +479,7 @@ proc relayEnable*(relays: seq[string]): int =
         echo "Adding and enabling ", relay
         config.relays_known.add relay
       config.relays.incl relay
-  config.save(configPath)
+  config.save()
 
 proc relayDisable*(delete = false, relays: seq[string]): int =
   ## stop sending posts to specified relays
@@ -508,7 +508,7 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
         if index <= config.relays_known.len and index > 0:
           indexRemove.add config.relays_known.nthKey(index - 1)
       except ValueError: discard # Ignore request to disable non-existant relay
-  config.save(configPath)
+  config.save()
   if indexRemove.len > 0:
     result = relayDisable(delete, indexRemove)
 
