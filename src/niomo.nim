@@ -196,7 +196,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       else: Filter(ids: @[postid], kinds: kinds, limit: limit)
 
     # TODO: Get relays as well
-    var filter = block:
+    var filter =
       try: fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
       except:
         if postid.len != 0 and postid[0] == '{' and postid[^1] == '}' and likely postid[1] == '"':
