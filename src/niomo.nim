@@ -191,7 +191,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   proc getFilter(postid: string): CMRequest =
     template inputToFilter: Filter =
       ## Assume input to be an event ID
-      Filter(ids: @[postid], limit: limit, kinds: kinds)
+      Filter(ids: @[postid], kinds: kinds)
 
     # TODO: Get relays as well
     var filter = block:
