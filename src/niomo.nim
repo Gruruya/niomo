@@ -103,7 +103,7 @@ proc promptYN(default: bool): bool =
 #[___ CLI Commands _________________________________________]#
 
 
-proc post*(echo = false, account: Option[string] = none string, raw = false, text: seq[string]): int =
+proc post*(echo = false, account: Option[string] = none string, raw = false, pow = 0, text: seq[string]): int =
   ## make a post
   var config = getConfig()
   let keypair = getKeypair(account)
@@ -119,17 +119,20 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, tex
       for i in 0..text.high:
         if text[i] in ["-", "/dev/stdin"]: text[i] = input
 
-  let post =
-    if not raw: CMEvent(event: note(keypair, text.join(" "))).toJson # TODO: Recommend enabled relays
-    else: text.join(" ")
+  var post =
+    if not raw: note(keypair, text.join(" ")) # TODO: Recommend enabled relays
+    else: text.join(" ").fromJson(nmostr.Event)
+
+  if pow > 0:
+    post.pow(pow)
 
   if echo:
-    echo post
+    echo CMEvent(event: post).toJson
     return
 
-  proc send(relay, post: string) {.nimcall.} =
+  proc send(relay: string, post: nmostr.Event) {.nimcall.} =
     let ws = whisky.newWebSocket(relay)
-    ws.send(post)
+    ws.send(CMEvent(event: post).toJson)
     # Read back response
     let r = ws.receiveMessage()
     if r.isSome:
@@ -550,6 +553,6 @@ when isMainModule:
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
   dispatchMulti(["multi", cmdName = "niomo"],
     [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display raw JSON of the response"}, short = {"raw": 'R'}, positional = "ids"],
-    [post, help = {"raw": "treat input as raw JSON rather than the content of a note"}, short = {"raw": 'R'}],
+    [post, help = {"raw": "treat input as raw JSON rather than the content of a note"}, short = {"raw": 'R', "pow": 'P'}],
     [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "set", "import", "remove", "list"]],
     [relays, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
