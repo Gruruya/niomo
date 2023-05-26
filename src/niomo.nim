@@ -257,7 +257,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
               when msg is SMEvent:
                 template event: untyped = msg.event
 
-                template display(event: events.Event) =
+                template display(event: nmostr.Event) =
                   let header  =
                     event.pubkey.toBech32 & "\n" &
                     NNote(id: event.id).toBech32 & "\n" &
@@ -305,7 +305,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
                   if event.content.startsWith("{"): # contains a stringified post
                     try:
-                      let parsed = event.content.fromJson(events.Event)
+                      let parsed = event.content.fromJson(nmostr.Event)
                       display parsed
                     except JsonError:
                       echoRepost
