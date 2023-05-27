@@ -8,7 +8,7 @@ bin = @["niomo"]
 
 # Dependencies
 requires "nim >= 1.9.3"
-requires "nmostr >= 0.0.10.1"
+requires "nmostr >= 0.0.10.4"
 requires "cligen ^= 1.6.0"
 requires "yaml ^= 1.1.0"
 requires "adix >= 0.5.2"
