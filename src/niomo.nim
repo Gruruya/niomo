@@ -100,6 +100,10 @@ proc promptYN(default: bool): bool =
     else:
       break
 
+proc stripSlash(url: string): string =
+  if url[^1] == '/': url[0..^2]
+  else: url
+
 #[___ CLI Commands _________________________________________]#
 
 
@@ -271,13 +275,13 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                 for tag in event.tags: # collect relays
                   if tag.len >= 3 and (tag[0] == "e" or tag[0] == "p") and tag[2].startsWith("ws"):
                     withLock configLock:
-                      config.relays_known.incl tag[2]
+                      config.relays_known.incl tag[2].stripSlash
 
                 case event.kind:
                 of 2: # recommend relay
                   if event.content.startsWith("\"ws"):
                     withLock configLock:
-                      config.relays_known.incl event.content
+                      config.relays_known.incl event.content.stripSlash
 
                 of 6: # repost, NIP-18
                   template echoRepost =
@@ -292,11 +296,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                         of "e":
                           filter.ids.add tag[1]
                           if tag.high >= 2 and tag[2].len > 0:
-                            relays.add tag[2]
+                            relays.incl tag[2].stripSlash
                         of "p":
                           filter.authors.add tag[1]
                           if tag.high >= 2 and tag[2].len > 0:
-                            relays.add tag[2]
+                            relays.incl tag[2].stripSlash
                     if filter != Filter(limit: 1):
                       if relays.len > 0:
                         m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relays, raw)
@@ -447,6 +451,7 @@ proc relayAdd*(activate = true, relays: seq[string]): int =
   ## add relays to known relays
   var config = getConfig()
   for relay in relays:
+    let relay = relay.stripSlash()
     if activate:
       if relay in config.relays_known:
         echo "Enabling ", relay
@@ -474,6 +479,7 @@ proc relayEnable*(relays: seq[string]): int =
         echo $index & " is out of bounds, there are only " & $config.relays_known.len & " known relays."
 
     except ValueError: # Parse as url
+      let relay = relay.stripSlash()
       if relay in config.relays_known:
         echo "Enabling ", relay
       else:
@@ -501,6 +507,7 @@ proc relayDisable*(delete = false, relays: seq[string]): int =
   var config = getConfig()
   var indexRemove: seq[string]
   for relay in relays:
+    let relay = relay.stripSlash
     if relay in config.relays_known:
       disable(relay)
     else:
