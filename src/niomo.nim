@@ -157,7 +157,7 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, eve
     for relay in config.relays:
       m.spawn send(relay, post)
 
-proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, ids: seq[string]): int =
+proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, search = "", ids: seq[string]): int =
   ## show a post
   ##
   ## input (ids) can be an event ID, filter JSON, or NIP-19 bech32 address
@@ -196,8 +196,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     template inputToFilter: Filter =
       ## Assume input to be an event ID
       if postid.len == 0:
-            Filter(kinds: kinds, limit: limit)
-      else: Filter(ids: @[postid], kinds: kinds, limit: limit)
+            Filter(kinds: kinds, limit: limit, search: search)
+      else: Filter(ids: @[postid], kinds: kinds, limit: limit, search: search)
 
     # TODO: Get relays as well
     var filter =
@@ -214,6 +214,8 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
     if kinds != @[1, 6, 30023]:
       for kind in kinds:
         if kind notin filter.kinds: filter.kinds.add kind
+    if search.len > 0:
+      filter.search = search
 
     CMRequest(id: randomID(), filter: filter)
 
