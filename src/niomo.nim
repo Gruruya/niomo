@@ -567,7 +567,7 @@ when isMainModule:
     [relayRemove, cmdName = "remove", dispatchName = "rRemove", usage = "$command $args\n${doc}"],
     [relayList, cmdName = "list", dispatchName = "rList", usage = "$command $args\n${doc}"])
   dispatchMulti(["multi", cmdName = "niomo"],
-    [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display raw JSON of the response"}, short = {"raw": 'R'}, positional = "ids"],
+    [show, help = {"kinds": "kinds to filter for, pass -1 for any", "raw": "display raw JSON of the response"}, short = {"raw": 'R', "search": 'S'}, positional = "ids"],
     [post, help = {"raw": "treat input as raw message (JSON)", "event": "treat input as raw event JSON"}, short = {"raw": 'R', "event": 'E', "pow": 'P'}],
     [accounts, doc = "manage your identities/keypairs. run `accounts help` for subsubcommands", stopWords = @["create", "set", "import", "remove", "list"]],
     [relays, doc = "manage what relays to send posts to. run `relay help` for subsubcommands", stopWords = @["add", "enable", "disable", "remove", "list"]])
