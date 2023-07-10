@@ -6,7 +6,7 @@
 #   Copyright © 2020, 2021 Status Research & Development GmbH
 #   SPDX-License-Identifier: MIT
 
-## Generate a deterministic friendly name for a public key
+## Generate a deterministic friendly name for a public key.
 ## Modified from `https://github.com/status-im/nim-status/blob/master/status/private/alias.nim`
 
 import

@@ -1,6 +1,10 @@
 # adix/lptabz translation for nimYAML --- niomo
 # Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
 # SPDX-License-Identifier: AGPL-3.0-only
+#
+# This file incorporates work covered by the following copyright:
+#   Copyright © 2015-2023 Felix Krause
+#   SPDX-License-Identifier: MIT
 
 ## YAML serialization for c-blake's adix/LPTabz
 ## Pretty much just taken from `https://github.com/flyx/NimYAML/blob/devel/yaml/serialization.nim` with `Table` and `set` replaced with `LPTabz` and `LPSetz`
@@ -78,5 +82,3 @@ proc representObject*[K,Z,z](value: LPSetz[K,Z,z], ts: TagStyle, c: Serializatio
   for item in value:
     representChild(item, childTagStyle, c)
   c.put(endSeqEvent())
-
-# End of YAML serialization
