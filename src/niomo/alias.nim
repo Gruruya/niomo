@@ -7,7 +7,7 @@
 #   SPDX-License-Identifier: MIT
 
 ## Generate a deterministic friendly name for a public key
-## Modified from `nim-status/status/private/alias.nim`
+## Modified from `https://github.com/status-im/nim-status/blob/master/status/private/alias.nim`
 
 import
   std/bitops,

@@ -7,7 +7,7 @@
 #   SPDX-License-Identifier: MIT
 
 ## List of animal names and adjectives. Used to generate friendly names from pubkeys by `alias.nim`.
-## Taken from `nim-status/status/private/alias/data.nim`
+## Taken from `https://github.com/status-im/nim-status/blob/master/status/private/alias/data.nim`
 
 type Adjectives = array[0..1388, string]
 type Animals = array[0..1703, string]

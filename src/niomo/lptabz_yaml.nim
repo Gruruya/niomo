@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 ## YAML serialization for c-blake's adix/LPTabz
-## Pretty much just taken from `NimYAML/yaml/serialization.nim` with `Table` and `set` replaced with `LPTabz` and `LPSetz`
+## Pretty much just taken from `https://github.com/flyx/NimYAML/blob/devel/yaml/serialization.nim` with `Table` and `set` replaced with `LPTabz` and `LPSetz`
 
 import pkg/yaml/[serialization, presenter, taglib, private/internal], pkg/[adix/lptabz]
 
