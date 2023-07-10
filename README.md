@@ -1,3 +1,8 @@
+[
+Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+]:#
+
 # niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
 
 Command-line client for Nostr. Experimental.  

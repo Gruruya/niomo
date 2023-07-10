@@ -1,27 +1,14 @@
-# niomo --- Command-line client for Nostr.
+# adix/lptabz translation for nimYAML --- niomo
 # Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
-#
-# This file is part of niomo.
-#
-# niomo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, version 3 of the License.
-#
-# niomo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with niomo.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: AGPL-3.0-only
 
 ## YAML serialization for c-blake's adix/LPTabz
+## Pretty much just taken from `NimYAML/yaml/serialization.nim` with `Table` and `set` replaced with `LPTabz` and `LPSetz`
 
 import pkg/yaml/[serialization, presenter, taglib, private/internal], pkg/[adix/lptabz]
 
 {.used, push raises: [].}
 
-# Taken from `NimYAML/yaml/serialization.nim`, `Table` and `set` replaced with `LPTabz` and `LPSetz`
 proc constructionError(s: YamlStream, mark: Mark, msg: string): ref YamlConstructionError =
   return newYamlConstructionError(s, mark, msg)
 
