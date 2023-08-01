@@ -6,7 +6,7 @@
 
 import
   os, strutils, sequtils, sugar, options, streams, random, terminal, locks,
-  pkg/[nmostr, yaml, adix/lptabz, cligen, malebolgia, whisky],
+  pkg/[nmostr, nmostr/pow, yaml, adix/lptabz, cligen, malebolgia, whisky],
   ./niomo/alias, ./niomo/lptabz_yaml
 
 #[___ Types and helper utils _________________________________________]#
