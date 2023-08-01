@@ -144,7 +144,7 @@ proc post*(echo = false, account: Option[string] = none string, raw = false, eve
     for relay in config.relays:
       m.spawn send(relay, post)
 
-proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, search = "", ids: seq[string]): int =
+proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 10, stream = false, search = "", ids: seq[string]): int =
   ## show a post
   ##
   ## input (ids) can be an event ID, filter JSON, or NIP-19 bech32 address
@@ -179,7 +179,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   elif kinds.len > 3: # remove defaults kinds if any were user specified
     kinds = kinds[3..^1]
 
-  proc getFilter(postid: string): CMRequest =
+  proc getRequest(postid: string): CMRequest =
     template inputToFilter: Filter =
       ## Assume input to be an event ID
       if postid.len == 0:
@@ -208,7 +208,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 
   if echo:
     for id in ids:
-      echo getFilter(id).toJson
+      echo getRequest(id).toJson
     return
 
   #[___ Global variables for use in threads ___]#
@@ -227,9 +227,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   var foundSigsLock {.global.}: Lock
 
   #[___ Threaded request implementation ___]#
-  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw: bool) {.gcsafe.} # Early declare for mutual recursion
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw, stream: bool) {.gcsafe.} # Early declare for mutual recursion
 
-  proc request(req, relay: string, raw: bool) {.nimcall, gcsafe.} =
+  proc request(req, relay: string, raw, stream: bool) {.nimcall, gcsafe.} =
     let ws = whisky.newWebSocket(relay)
     var m = createMaster()
     m.awaitAll:
@@ -292,9 +292,9 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                             relays.incl tag[2].stripSlash
                     if filter != Filter(limit: 1):
                       if relays.len > 0:
-                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relays, raw)
+                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relays, raw, stream)
                       else:
-                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relay, raw)
+                        m.spawn request(CMRequest(id: randomID(), filter: filter).toJson, relay, raw, stream)
 
                   if event.content.startsWith("{"): # contains a stringified post
                     try:
@@ -307,11 +307,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                 else:
                   display event
 
-            when msg is SMEose: break
+            when msg is SMEose:
+              if not stream: break
         except: discard
     ws.close()
 
-  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw: bool) {.gcsafe.} =
+  proc request[K,Z,z](req: string, relays: LPSetz[K,Z,z], raw, stream: bool) {.gcsafe.} =
     # Call `randomize()` first
     var relays = relays
     var m = createMaster()
@@ -320,7 +321,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       while relays.len > 0:
         let relay = relays.nthKey(rand(relays.len - 1))
         relays.del(relay)
-        m.spawn request(req, relay, raw) # TODO: Check if any more posts can be fetched
+        m.spawn request(req, relay, raw, stream) # TODO: Check if any more posts can be fetched
 
   if config.relays.len == 0:
     usage "No relays configured, add relays with `niomo relays add`"
@@ -330,7 +331,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   var m = createMaster()
   m.awaitAll:
     for id in ids:
-      m.spawn request(getFilter(id).toJson, config.relays, raw)
+      m.spawn request(getRequest(id).toJson, config.relays, raw, stream)
   config.save()
 
 #[___ Config management _________________________________________]#
