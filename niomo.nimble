@@ -10,7 +10,7 @@ srcDir = "src"
 bin = @["niomo"]
 
 # Dependencies
-requires "nim >= 1.9.3"
+requires "nim >= 2.0.0"
 requires "nmostr >= 0.0.13"
 requires "cligen >= 1.6.0 & < 2.0.0"
 requires "yaml >= 1.1.0 & < 2.0.0"

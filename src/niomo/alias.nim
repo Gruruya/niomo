@@ -1,7 +1,6 @@
 # Pubkey to human-friendly name --- niomo
 # Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
 # SPDX-License-Identifier: AGPL-3.0-only
-#
 # This file incorporates work covered by the following copyright:
 #   Copyright © 2020, 2021 Status Research & Development GmbH
 #   SPDX-License-Identifier: MIT
