@@ -240,6 +240,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
         let r = ws.receiveMessage()
         if r.isNone: break
         let response = r.unsafeGet
+        if response.kind == Ping: continue
         if response.kind != TextMessage or response.data.len == 0: break
         try:
           let msgUnion = response.data.fromMessage
