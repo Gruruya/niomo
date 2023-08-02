@@ -192,9 +192,11 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       except:
         if postid.len != 0 and postid[0] == '{' and postid[^1] == '}' and likely postid[1] == '"':
           try: postid.fromJson(Filter)
-
           except: return CMRequest(id: randomID(), filter: inputToFilter())
-        else: return CMRequest(id: randomID(), filter: inputToFilter())
+        else:
+          if postid.len != 0 and postid[0] == '[' and postid[^1] == ']' and likely postid.startsWith("[\"REQ\","):
+            try: return postid.fromJson(CMRequest) except: discard
+          return CMRequest(id: randomID(), filter: inputToFilter())
 
     if limit != 10 or filter.limit == 0:
       filter.limit = limit
