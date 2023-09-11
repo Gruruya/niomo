@@ -10,7 +10,7 @@
 
 import
   std/bitops,
-  pkg/[secp256k1, stew/endians2],
+  pkg/[nmostr/keys, stew/endians2],
   ./wordpool
 
 # For details: https://en.wikipedia.org/wiki/Linear-feedback_shift_register
@@ -28,15 +28,11 @@ proc next(self: Lsfr): uint64 {.raises: [].} =
   self.data = bitor(self.data shl 1, bit)
   result = self.data
 
-func truncPubkey(pubkey: SkPublicKey): uint64 =
-  let rawKey = pubkey.toRaw
-  fromBytesBE(uint64, rawKey[25..32])
-
-func truncPubkey(pubkey: SkXOnlyPublicKey): uint64 =
-  let rawKey = pubkey.toRaw
+func truncPubkey(pubkey: PublicKey): uint64 =
+  let rawKey = pubkey.toBytes
   fromBytesBE(uint64, rawKey[24..31])
 
-func generateAlias*(pubkey: SkPublicKey | SkXOnlyPublicKey): string =
+func generateAlias*(pubkey: PublicKey): string =
   ## generateAlias returns a 3-words generated name given a public key.
   ## We ignore any error, empty string result is considered an error.
   let seed = truncPubkey(pubkey)

@@ -47,10 +47,10 @@ proc display(keypair: Keypair, bech32 = false): string {.inline.} =
 
 template keypair(config: Config, name: string): Keypair =
   if name in config.accounts:
-    toKeypair(SecretKey.fromHex(config.accounts[name]).get)
+    SecretKey.fromHex(config.accounts[name]).toKeypair
   else:
     echo name, " isn't an existing account. Creating it."
-    let created = newKeypair()
+    let created = Keypair.random()
     echo display(created)
     config.accounts[name] = $created.seckey
     config.save()
@@ -58,18 +58,18 @@ template keypair(config: Config, name: string): Keypair =
 
 func parseSecretKey(key: string): SecretKey {.inline.} =
   if key.len == 64:
-    return SecretKey.fromHex(key).get
+    return SecretKey.fromHex(key)
   elif key.len == 63 and key.startsWith("nsec1"):
-    return SecretKey.fromRaw(decode("nsec1", key)).get
+    return SecretKey.fromBytes(decode("nsec1", key))
   raise newException(ValueError, "Unknown private key format. Supported: hex, bech32")
 
 template defaultKeypair: Keypair =
-  if config.account.len == 0: newKeypair()
+  if config.account.len == 0: Keypair.random()
   else: config.keypair(config.account)
 
 template getKeypair(account: Option[string]): Keypair =
   if account.isNone: defaultKeypair()
-  elif unsafeGet(account).len == 0: newKeypair()
+  elif unsafeGet(account).len == 0: Keypair.random()
   else:
     try: # Treat as private key
       parseSecretKey(unsafeGet account).toKeypair
@@ -179,23 +179,26 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
   elif kinds.len > 3: # remove defaults kinds if any were user specified
     kinds = kinds[3..^1]
 
-  proc getRequest(postid: string): CMRequest =
+  proc getRequest(input: string): CMRequest =
     template inputToFilter: Filter =
       ## Assume input to be an event ID
-      if postid.len == 0:
-            Filter(kinds: kinds, limit: limit, search: search)
-      else: Filter(ids: @[postid], kinds: kinds, limit: limit, search: search)
+      if input.len == 0:
+        Filter(kinds: kinds, limit: limit, search: search)
+      elif input.len == 64:
+        Filter(ids: @[toStackString(64, input)], kinds: kinds, limit: limit, search: search)
+      else:
+        raise newException(ValueError, "Don't know how to add " & input & " to filter")
 
     # TODO: Get relays as well
     var filter =
-      try: fromNostrBech32(postid).toFilter # Try to parse as NIP-19 bech32 entity
+      try: fromNostrBech32(input).toFilter # Try to parse as NIP-19 bech32 entity
       except:
-        if postid.len != 0 and postid[0] == '{' and postid[^1] == '}' and likely postid[1] == '"':
-          try: postid.fromJson(Filter)
+        if input.len != 0 and input[0] == '{' and input[^1] == '}' and likely input[1] == '"':
+          try: input.fromJson(Filter)
           except: return CMRequest(id: randomID(), filter: inputToFilter())
         else:
-          if postid.len != 0 and postid[0] == '[' and postid[^1] == ']' and likely postid.startsWith("[\"REQ\","):
-            try: return postid.fromJson(CMRequest) except: discard
+          if input.len != 0 and input[0] == '[' and input[^1] == ']' and likely input.startsWith("[\"REQ\","):
+            try: return input.fromJson(CMRequest) except: discard
           return CMRequest(id: randomID(), filter: inputToFilter())
 
     if limit != 10 or filter.limit == 0:
@@ -283,14 +286,16 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                     var filter = Filter(limit: 1)
                     var relays = initLPSetz[string, int8, 6]()
                     for tag in event.tags:
-                      if tag.len >= 2 and tag[1].len > 0:
+                      if tag.len >= 2:
                         case tag[0]:
                         of "e":
-                          filter.ids.add tag[1]
+                          if tag[1].len == 64:
+                            filter.ids.add toStackString(64, tag[1])
                           if tag.high >= 2 and tag[2].len > 0:
                             relays.incl tag[2].stripSlash
                         of "p":
-                          filter.authors.add tag[1]
+                          if tag[1].len == 64:
+                            filter.authors.add toStackString(64, tag[1])
                           if tag.high >= 2 and tag[2].len > 0:
                             relays.incl tag[2].stripSlash
                     if filter != Filter(limit: 1):
@@ -340,10 +345,10 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
 #[___ Config management _________________________________________]#
 
 template randomAccount: (string, Keypair) =
-  var kp = newKeypair()
+  var kp = Keypair.random()
   var name = generateAlias(kp.pubkey)
   while unlikely name in config.accounts:
-    kp = newKeypair()
+    kp = Keypair.random()
     name = generateAlias(kp.seckey.toPublicKey)
   (name, kp)
 
@@ -373,7 +378,7 @@ proc accountCreate*(echo = false, overwrite = false, bech32 = false, names: seq[
       except ValueError: discard
     for name in names:
       if overwrite or name notin config.accounts:
-        result &= config.addAcc(name, newKeypair(), echo, bech32)
+        result &= config.addAcc(name, Keypair.random(), echo, bech32)
       else:
         result &= name & " already exists, refusing to overwrite\n"
 
@@ -384,7 +389,8 @@ proc accountImport*(echo = false, privateKeys: seq[string]): int =
     usage "No private keys given, nothing to import. ${HELP}"
   for key in privateKeys:
     let seckey = parseSecretKey(key)
-    echo config.addAcc(generateAlias(seckey.toPublicKey), seckey, echo)
+    let kp = seckey.toKeypair
+    echo config.addAcc(generateAlias(kp.pubkey), kp, echo)
 
 proc accountSet*(name: seq[string]): string =
   ## change what account to use by default, pass no arguments to be anonymous
@@ -434,7 +440,7 @@ proc accountList*(bech32 = false, prefixes: seq[string]): string =
 
   for account, key in config.accounts.pairs:
     if prefixes.len == 0 or any(prefixes, prefix => account.startsWith(prefix)):
-      let kp = SecretKey.fromHex(key).get.toKeypair
+      let kp = SecretKey.fromHex(key).toKeypair
       result &= account & ":\n" & display(kp, bech32)
 
   if result.len == 0:
