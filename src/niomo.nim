@@ -6,7 +6,7 @@
 
 import
   os, strutils, sequtils, sugar, options, streams, random, terminal, locks,
-  pkg/[nmostr, nmostr/pow, yaml, adix/lptabz, cligen, malebolgia, whisky],
+  pkg/[nmostr, nmostr/pow, yaml, adix/lptabz, cligen, malebolgia, whisky, stack_strings],
   ./niomo/alias, ./niomo/lptabz_yaml
 
 #[___ Types and helper utils _________________________________________]#
@@ -185,7 +185,7 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
       if input.len == 0:
         Filter(kinds: kinds, limit: limit, search: search)
       elif input.len == 64:
-        Filter(ids: @[toStackString(64, input)], kinds: kinds, limit: limit, search: search)
+        Filter(ids: @[unsafeToStackString(input, 64)], kinds: kinds, limit: limit, search: search)
       else:
         raise newException(ValueError, "Don't know how to add " & input & " to filter")
 
@@ -290,12 +290,12 @@ proc show*(echo = false, raw = false, kinds: seq[int] = @[1, 6, 30023], limit = 
                         case tag[0]:
                         of "e":
                           if tag[1].len == 64:
-                            filter.ids.add toStackString(64, tag[1])
+                            filter.ids.add unsafeToStackString(tag[1], 64)
                           if tag.high >= 2 and tag[2].len > 0:
                             relays.incl tag[2].stripSlash
                         of "p":
                           if tag[1].len == 64:
-                            filter.authors.add toStackString(64, tag[1])
+                            filter.authors.add unsafeToStackString(tag[1], 64)
                           if tag.high >= 2 and tag[2].len > 0:
                             relays.incl tag[2].stripSlash
                     if filter != Filter(limit: 1):
