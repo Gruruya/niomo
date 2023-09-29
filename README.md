@@ -3,7 +3,7 @@ Copyright © 2023 Gruruya <gruruya.chi4c@slmails.com>
 SPDX-License-Identifier: CC-BY-SA-4.0
 ]:#
 
-# niomo $\textcolor{gold}{\textsf{Powered by Nim}}$
+# niomo
 
 Command-line client for Nostr. Experimental.  
 _Reference client for [nmostr](https://github.com/Gruruya/nmostr)_ $\color{grey}{\textsf{— the Nim Nostr library }}$
